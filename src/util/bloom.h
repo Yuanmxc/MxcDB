@@ -19,7 +19,7 @@ class BloomFilter : public Filter {
 public:
   explicit BloomFilter(int bits);
   ~BloomFilter() = default;
-  // 给长度为 n 的 key,创建一个过滤策略，并将策略序列化为 string ，追加到 dst
+  //给长度为 n 的 key,创建一个过滤策略，并将策略序列化为 string ，追加到 dst
   void CreateFiler(const string *key,
                    std::string *filter) const override; // d
   bool KeyMayMatch(const string &key, const string &filter) const override;
