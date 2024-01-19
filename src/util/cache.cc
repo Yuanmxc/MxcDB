@@ -1,6 +1,6 @@
 #include "cache.h"
 #include "folly/hash/Hash.h"
-namespace MxcDB {
+namespace mxcdb {
 
 void LruCache::Put(const string &key, string &val) {
   std::lock_guard<std::mutex> lck(mut);
@@ -42,4 +42,4 @@ bool ShareCache::Get(const string &key, string *val) {
 uint32_t ShareCache::Hash(const string &key) {
   return (folly::hash::fnv32(key.data())) & 0x000f;
 }
-} // namespace MxcDB
+} // namespace mxcdb

@@ -1,14 +1,15 @@
-#ifndef MxcDB_CACHE_H_
-#define MxcDB_CACHE_H_
-#include "spdlog/spdlog.h"
+#ifndef MXCDB_COMMON_H_
+#define MXCDB_COMMON_H_
 #include <cstddef>
 #include <memory.h>
-#include <std:: string_view>
-namespace MxcDB {
+#include <string_view>
 
-//定长 fix
-//非定长 varint
-//编码
+#include "spdlog/spdlog.h"
+namespace mxcdb {
+
+// 定长 fix
+// 非定长 varint
+// 编码
 void PutFixed32(std::string *dst, uint32_t value);
 void PutFixed64(std::string *dst, uint64_t value);
 void PutVarint32(std::string *dst, uint32_t value);
@@ -17,16 +18,16 @@ void PutLengthPrefixed(
     std::string *dst,
     const std::std::string_view &value); // dst： 长度(编码后) + value
 
-//解码
+// 解码
 bool GetVarint32(std::string_view *input, uint32_t *value);
 bool GetVarint64(std::string_view *input, uint64_t *value);
 bool GetLengthPrefixed(std::string_view *input, std::string_view *result);
 
-//解码变长整形最基础函数。
+// 解码变长整形最基础函数。
 const char *GetVarint32Ptr(const char *p, const char *limit, uint32_t *v);
 const char *GetVarint64Ptr(const char *p, const char *limit, uint64_t *v);
 
-//获取编码后长度
+// 获取编码后长度
 int VarintLength(uint64_t v);
 
 // 编码变长整形的最基础函数。
@@ -65,7 +66,7 @@ inline const char *GetVarint32Ptr(const char *p, const char *limit,
                                   uint32_t *value) {
   if (p < limit) {
     uint32_t result = *(reinterpret_cast<const uint8_t *>(p));
-    if ((result & 128) == 0) { //字节最高 bit 为0，说明编码结束。
+    if ((result & 128) == 0) { // 字节最高 bit 为0，说明编码结束。
       *value = result;
       return p + 1;
     }
@@ -100,8 +101,8 @@ public:
   static State InvalidArgument(const std::string &msg) {
     return State(kinvalidargument, msg);
   }
-  static State IOError(const std::string &msg) { return State(kioerror, msg); }
-  bool ok() const { return (state_ == nullptr); }
+  static State IoError(const std::string &msg) { return State(kioerror, msg); }
+  bool Isok() const { return (state_ == nullptr); }
 
   bool IsNotFound() const { return code() == knotfound; }
 
@@ -133,5 +134,5 @@ private:
   const char *state_;
 };
 
-} // namespace MxcDB
+} // namespace mxcdb
 #endif

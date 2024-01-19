@@ -1,6 +1,5 @@
-#ifndef MxcDB_CACHE_H_
-#define MxcDB_CACHE_H_
-#include "folly/FBString.h"
+#ifndef MXCDB_CACHE_H_
+#define MXCDB_CACHE_H_
 #include <array>
 #include <list>
 #include <map>
@@ -8,7 +7,7 @@
 #include <mutex>
 #include <unordered_map>
 using string = folly::fbstring;
-namespace MxcDB {
+namespace mxcdb {
 
 class Cache {
 public:
@@ -46,5 +45,5 @@ private:
   std::array<Lrucacheptr, 16> LruMap;
 };
 
-} // namespace MxcDB
+} // namespace mxcdb
 #endif

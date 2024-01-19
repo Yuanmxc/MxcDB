@@ -1,27 +1,27 @@
-#ifndef MxcDB_WRITE_BATCH_H_
-#define MxcDB_WRITE_BATCH_H_
-#include <std:: string_view>
+#ifndef MXCDB_WRITE_BATCH_H_
+#define MXCDB_WRITE_BATCH_H_
 #include <string>
+#include <string_view>
 
 #include "../util/common.h"
-namespace MxcDB {
+namespace mxcdb {
 
-class Memtable;  //
+class Memtable; //
 
 class WriteBatch {
- public:
+public:
   WriteBatch() { Clear(); };
   ~WriteBatch();
-  WriteBatch(const WriteBatch&) = default;
-  WriteBatch& operator=(const WriteBatch&) = default;
+  WriteBatch(const WriteBatch &) = default;
+  WriteBatch &operator=(const WriteBatch &) = default;
   void Put(std::string_view key, std::string_view value);
   void Delete(std::string_view key);
   void Clear();
-  void Append(const WriteBatch& source);
-  State Iterate(Handler* handler) const;
+  void Append(const WriteBatch &source);
+  State Iterate(Handler *handler) const;
   size_t mateSize() const { return mate.size(); }
 
- private:
+private:
   // 返回条目数
   int Count();
   // 修改条目数
@@ -34,13 +34,13 @@ class WriteBatch {
   std::string_view Contents() { return std::string_view(mate); }
   size_t ByteSize() { return mate.size(); }
 
-  void SetContents(const std::string_view& contents);
+  void SetContents(const std::string_view &contents);
 
-  State InsertInto(Memtable* memtable);
+  State InsertInto(Memtable *memtable);
 
   void Append();
 
   std::string mate;
 };
-}  // namespace MxcDB
+} // namespace mxcdb
 #endif

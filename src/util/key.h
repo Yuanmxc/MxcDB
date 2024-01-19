@@ -1,13 +1,13 @@
-#ifndef MxcDB_KEY_H_
-#define MxcDB_KEY_H_
+#ifndef MXCDB_KEY_H_
+#define MXCDB_KEY_H_
 #include <cstddef>
 #include <cstdint>
 #include <string>
-namespace MxcDB {
+namespace mxcdb {
 typedef uint64_t SequenceNum;
 class LookupKey {
 public:
 private:
 };
-} // namespace MxcDB
+} // namespace mxcdb
 #endif

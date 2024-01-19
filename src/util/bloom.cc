@@ -1,11 +1,10 @@
 #include "bloom.h"
 #include <cstdint>
-#include <folly/hash/Hash.h>
 #include <memory.h>
 #include <string>
 
-namespace MxcDB {
-static uint32_t BloomHash(const string &key) {
+namespace yubindb {
+static uinmxcdbloomHash(const string &key) {
   return folly::hash::fnv32(key.data());
 }
 BloomFilter::BloomFilter(int bits) : bits_key(bits) {
@@ -59,4 +58,5 @@ bool BloomFilter::KeyMayMatch(const string &key, const string &filter) const {
 std::shared_ptr<Filter> NewBloomFilter(int bits) {
   return std::make_shared<BloomFilter>(bits);
 }
-} // namespace MxcDB
+} // namespace yubindb
+mxcdb

@@ -1,8 +1,14 @@
-#ifndef MxcDB_MEMTABLE_H_
-#define MxcDB_MEMTABLE_H_
-namespace MxcDB {
+#ifndef MXCDB_MEMTABLE_H_
+#define MXCDB_MEMTABLE_H_
+namespace mxcdb {
 
-class Nemtable {};
+class MemTable {
+public:
+  MemTable();
+  ~MemTable();
 
-} // namespace MxcDB
+private:
+};
+
+} // namespace mxcdb
 #endif

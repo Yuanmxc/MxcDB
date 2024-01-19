@@ -1,5 +1,5 @@
 #include "common.h"
-namespace MxcDB {
+namespace yubindb {
 void PutFixed32(std::string *dst, uint32_t value) {
   char buf[sizeof(value)];
   EncodeFixed32(buf, value);
@@ -63,8 +63,7 @@ void PutVarint64(std::string *dst, uint64_t v) {
   dst->append(buf, ptr - buf);
 }
 
-void PutLengthPrefixed(std::string *dst,
-                                       const std::string_view &value) {
+void PutLengthPrefixed(std::string *dst, const std::string_view &value) {
   PutVarint32(dst, value.size());
   dst->append(value.data(), value.size());
 }
@@ -138,7 +137,7 @@ bool GetVarint64(std::string_view *input, uint64_t *value) {
 }
 
 const char *GetLengthPrefixed(const char *p, const char *limit,
-                                              std::string_view *result) {
+                              std::string_view *result) {
   uint32_t len;
   p = GetVarint32Ptr(p, limit, &len);
   if (p == nullptr)
@@ -149,8 +148,7 @@ const char *GetLengthPrefixed(const char *p, const char *limit,
   return p + len;
 }
 
-bool GetLengthPrefixed(std::string_view *input,
-                                       std::string_view *result) {
+bool GetLengthPrefixed(std::string_view *input, std::string_view *result) {
   uint32_t len;
   if (GetVarint32(input, &len) && input->size() >= len) {
     *result = std::string_view(input->data(), len);
@@ -214,4 +212,4 @@ std::string State::ToString() const {
     return result;
   }
 }
-} // namespace MxcDB
+} // namespace yubindb
