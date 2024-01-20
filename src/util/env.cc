@@ -4,7 +4,7 @@
 
 #include "spdlog/spdlog.h"
 
-namespace yubindb {
+namespace mxcdb {
 State PosixEnv::NewReadFile(const std::string &filename,
                             std::unique_ptr<ReadFile> result) {
   int fd = ::open(filename.c_str(), O_RDONLY | O_CLOEXEC);
@@ -109,4 +109,5 @@ State PosixEnv::RenameFile(const std::string &from, const std::string &to) {
 
 // return State::Ok();
 //}
-} // namespace yubindb
+WritableFile::WritableFile() {}
+} // namespace mxcdb

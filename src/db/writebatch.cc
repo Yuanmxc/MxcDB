@@ -1,5 +1,5 @@
 #include "writebatch.h"
-namespace yubindb {
+namespace mxcdb {
 // 前8字节是该WriteBatch的SequenceNumber，后4字节是该WriteBatch中Entry的数量
 static const size_t Headsize = 12;
 void WriteBatch::Clear() {
@@ -26,4 +26,4 @@ void WriteBatch::SetContents(const std::string_view &contents) {
 }
 
 State WriteBatch::InsertInto(Memtable *memtable) {}
-} // namespace yubindb
+} // namespace mxcdb

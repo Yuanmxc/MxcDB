@@ -1,5 +1,5 @@
 #include "common.h"
-namespace yubindb {
+namespace mxcdb {
 void PutFixed32(std::string *dst, uint32_t value) {
   char buf[sizeof(value)];
   EncodeFixed32(buf, value);
@@ -212,4 +212,4 @@ std::string State::ToString() const {
     return result;
   }
 }
-} // namespace yubindb
+} // namespace mxcdb
