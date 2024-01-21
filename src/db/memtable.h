@@ -2,10 +2,10 @@
 #define MXCDB_MEMTABLE_H_
 namespace mxcdb {
 
-class MemTable {
+class Memtable {
 public:
-  MemTable();
-  ~MemTable();
+  Memtable();
+  ~Memtable();
 
 private:
 };

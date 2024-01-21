@@ -17,11 +17,9 @@ public:
   void Put(std::string_view key, std::string_view value);
   void Delete(std::string_view key);
   void Clear();
-  void Append(const WriteBatch &source);
+  void Append(WriteBatch &source);
   State Iterate(Handler *handler) const;
   size_t mateSize() const { return mate.size(); }
-
-private:
   // 返回条目数
   int Count();
   // 修改条目数
@@ -38,8 +36,7 @@ private:
 
   State InsertInto(Memtable *memtable);
 
-  void Append();
-
+private:
   std::string mate;
 };
 } // namespace mxcdb
