@@ -46,10 +46,7 @@ public:
   explicit DBImpl(const Options opt, const std::string dbname);
   DBImpl(const DBImpl &) = delete;
   DBImpl &operator=(const DBImpl &) = delete;
-  ~DBImpl() {
-    mutex.unlock();
-    delete versions_;
-  };
+  ~DBImpl() { mutex.unlock(); };
   State Open(const Options &options, std::string_view name,
              DB **dbptr) override;
   State Put(const WriteOptions &options, std::string_view key,

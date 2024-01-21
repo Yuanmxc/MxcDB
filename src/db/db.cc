@@ -75,5 +75,7 @@ WriteBatch *DBImpl::BuildBatchGroup(Writer **last_writer) {
   }
   return fntbatch;
 }
-State DBImpl::MakeRoomForwrite(bool force) {}
+State DBImpl::MakeRoomForwrite(bool force) {
+  // TODO
+}
 } // namespace mxcdb
