@@ -5,9 +5,9 @@
 #include <string_view>
 
 #include "spdlog/spdlog.h"
-namespace mxcdb {
+namespace mxcdb
 
-typedef uint64_t SequenceNum;
+    typedef uint64_t SequenceNum;
 
 // 定长 fix
 // 非定长 varint
@@ -135,6 +135,5 @@ private:
   static const char *CopyState(const char *s);
   const char *state_;
 };
-
 } // namespace mxcdb
 #endif
