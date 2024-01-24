@@ -7,9 +7,9 @@
 #include <mutex>
 #include <unordered_map>
 using string = folly::fbstring;
-namespace mxcdb
+namespace mxcdb {
 
-    class Cache {
+class Cache {
 public:
   explicit Cache(){};
   virtual ~Cache() = 0;

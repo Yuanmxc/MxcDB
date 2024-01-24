@@ -8,6 +8,7 @@
 namespace mxcdb {
 static const int kBlockSize = 4096;
 class Arena {
+public:
   Arena() : alloc_ptr(nullptr), alloc_remaining(0), memory_usage(0) {}
   ~Arena() {
     for (size_t i = 0; i < blocks.size(); i++) {
