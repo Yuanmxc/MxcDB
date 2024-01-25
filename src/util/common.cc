@@ -158,6 +158,28 @@ bool GetLengthPrefixed(std::string_view *input, std::string_view *result) {
     return false;
   }
 }
+const char *GetLengthPrefixedview(const char *p, const char *limit,
+                                  std::string_view *result) {
+  uint32_t len;
+  p = GetVarint32Ptr(p, limit, &len);
+  if (p == nullptr)
+    return nullptr;
+  if (p + len > limit)
+    return nullptr;
+  *result = std::string_view(p, len);
+  return p + len;
+}
+
+bool GetLengthPrefixedview(std::string_view *input, std::string_view *result) {
+  uint32_t len;
+  if (GetVarint32(input, &len) && input->size() >= len) {
+    *result = std::string_view(input->data(), len);
+    input->remove_prefix(len);
+    return true;
+  } else {
+    return false;
+  }
+}
 const char *State::CopyState(const char *state) {
   uint32_t size;
   memcpy(&size, state, sizeof(size));

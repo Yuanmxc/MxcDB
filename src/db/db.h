@@ -55,7 +55,7 @@ public:
   State Write(const WriteOptions &options, WriteBatch *updates) override;
   State MakeRoomForwrite(bool force);
   State InsertInto(WriteBatch *batch, Memtable *mem);
-  WriteBatch *BuildBatchGroup(Writer **last_writer);
+  WriteBatch *BuildBatchGroup(std::shared_ptr<Writer> *last_writer);
 
 private:
   struct Writer {
