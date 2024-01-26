@@ -8,15 +8,22 @@
 #include "key.h"
 #include "skiplist.h"
 namespace mxcdb {
-typedef struct my_node {
+struct node {
+public:
+  node() {}
+  ~node() = default;
+
+private:
+  friend class Skiplist;
+  friend int my_cmp(skiplist_node *a, skiplist_node *b, void *aux);
   // Metadata for skiplist node.
   skiplist_node snode;
   // My data here: {int, int} pair.
   SkiplistKey key;
-} node;
+};
 
 // Define a comparison function for `my_node`.
-static int my_cmp(skiplist_node *a, skiplist_node *b, void *aux) {
+inline int my_cmp(skiplist_node *a, skiplist_node *b, void *aux) {
   // Get `my_node` from skiplist node `a` and `b`.
   node *aa, *bb;
   aa = _get_entry(a, node, snode);
@@ -34,7 +41,7 @@ public:
   bool Equal(SkiplistKey &a, SkiplistKey &b) const {
     return (cmp(a.getview(), b.getview()) == 0);
   }
-
+  bool GreaterEqual(SkiplistKey &a, SkiplistKey &b);
   bool KeyIsAfterNode(SkiplistKey &key, node *n) const;
 
 private:
