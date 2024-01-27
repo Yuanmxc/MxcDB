@@ -1,0 +1,15 @@
+#ifndef MXCDB_VERSION_EDIT_H_
+#define MXCDB_VERSION_EDIT_H_
+
+#include "../util/key.h"
+namespace mxcdb {
+class FileMate { // file mate
+  int re;
+  bool seek; // if compaction is not
+  uint64_t num;
+  uint64_t file_size;
+  InternalKey smallest;
+  InternalKey largeest;
+};
+} // namespace mxcdb
+#endif
