@@ -7,13 +7,13 @@
 #include "arena.h"
 #include "key.h"
 #include "skiplist.h"
-namespace mxcdb {
+namespace yubindb {
 struct node {
 public:
-  node() {}
+  node() = default;
+  node(const SkiplistKey &key_) : key(key_) {}
   ~node() = default;
 
-private:
   friend class Skiplist;
   friend int my_cmp(skiplist_node *a, skiplist_node *b, void *aux);
   // Metadata for skiplist node.
@@ -41,6 +41,9 @@ public:
   bool Equal(SkiplistKey &a, SkiplistKey &b) const {
     return (cmp(a.getview(), b.getview()) == 0);
   }
+  skiplist_node *Seek(const SkiplistKey &key);
+  skiplist_node *SeekToFirst();
+  skiplist_node *SeekToLast();
   bool GreaterEqual(SkiplistKey &a, SkiplistKey &b);
   bool KeyIsAfterNode(SkiplistKey &key, node *n) const;
 
@@ -48,5 +51,5 @@ private:
   skiplist_raw table;
   std::unique_ptr<Arena> arena; // for new and delete
 };
-} // namespace mxcdb
+} // namespace yubindb
 #endif

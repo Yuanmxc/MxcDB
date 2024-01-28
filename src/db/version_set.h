@@ -4,7 +4,7 @@
 
 #include "../util/key.h"
 #include "version_edit.h"
-namespace mxcdb {
+namespace yubindb {
 class Version {
 public:
   struct Stats {
@@ -26,5 +26,5 @@ public:
 private:
   std::shared_ptr<Version> nowversion;
 };
-} // namespace mxcdb
+} // namespace yubindb
 #endif

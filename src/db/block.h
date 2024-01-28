@@ -1,6 +1,6 @@
 #ifndef MXCDB_BLOCK_H_
 #define MXCDB_BLOCK_H_
-namespace mxcdb {
+namespace yubindb {
 class block {};
-} // namespace mxcdb
+} // namespace yubindb
 #endif

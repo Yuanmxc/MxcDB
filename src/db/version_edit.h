@@ -2,7 +2,7 @@
 #define MXCDB_VERSION_EDIT_H_
 
 #include "../util/key.h"
-namespace mxcdb {
+namespace yubindb {
 class FileMate { // file mate
   int re;
   bool seek; // if compaction is not
@@ -11,5 +11,5 @@ class FileMate { // file mate
   InternalKey smallest;
   InternalKey largeest;
 };
-} // namespace mxcdb
+} // namespace yubindb
 #endif

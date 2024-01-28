@@ -2,7 +2,7 @@
 #include "walog.h"
 
 #include "crc32c/crc32c.h"
-namespace mxcdb {
+namespace yubindb {
 
 State walWriter::Appendrecord(std::string_view str) {
   uint64_t size = str.size();
@@ -60,4 +60,4 @@ State walWriter::Flushphyrecord(RecordType type, const char *buf_,
   block_offset += kHeaderSize + size;
   return s;
 }
-} // namespace mxcdb
+} // namespace yubindb

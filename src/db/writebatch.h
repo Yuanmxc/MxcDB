@@ -4,7 +4,7 @@
 #include <string_view>
 
 #include "../util/common.h"
-namespace mxcdb {
+namespace yubindb {
 
 class Memtable; //
 
@@ -39,5 +39,5 @@ public:
 private:
   std::string mate;
 };
-} // namespace mxcdb
+} // namespace yubindb
 #endif

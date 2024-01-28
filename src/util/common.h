@@ -5,7 +5,7 @@
 #include <string_view>
 
 #include "spdlog/spdlog.h"
-namespace mxcdb {
+namespace yubindb {
 
 typedef uint64_t SequenceNum;
 
@@ -53,6 +53,7 @@ inline uint32_t DecodeFixed32(const char *ptr) {
 
   uint32_t result;
   std::memcpy(&result, buffer, sizeof(uint32_t));
+  return result;
 }
 
 inline uint64_t DecodeFixed64(const char *ptr) {
@@ -92,6 +93,7 @@ public:
       delete[] state_;
       state_ = (rhs.state_ == nullptr) ? nullptr : CopyState(rhs.state_);
     }
+    return *this;
   }
 
   State(State &&rhs) noexcept : state_(rhs.state_) { rhs.state_ = nullptr; }
@@ -140,5 +142,5 @@ private:
   static const char *CopyState(const char *s);
   const char *state_;
 };
-} // namespace mxcdb
+} // namespace yubindb
 #endif

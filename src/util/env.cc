@@ -1,10 +1,14 @@
 #include "env.h"
 
+#include <fcntl.h>
 #include <memory.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "spdlog/spdlog.h"
 
-namespace mxcdb {
+namespace yubindb {
 State WritableFile::Append(std::string_view ptr) {
   return Append(ptr.data(), ptr.size());
 }
@@ -26,9 +30,20 @@ State WritableFile::Append(const char *ptr, size_t size) {
   }
   return Flush();
 }
-State WritableFile::Close() {}
+State WritableFile::Close() {
+  State s = Flush();
+  errno = 0;
+  const int result = ::close(fd);
+  if (result < 0 && s.ok()) {
+    spdlog::error("error close: filename: {} err: {}", filestr.c_str(),
+                  strerror(errno));
+    s = State::IoError("error close");
+  }
+  fd = -1;
+  return s;
+}
 State WritableFile::Flush() {
-  const char *t = buf_;
+  char *t = buf_;
   uint64_t size = offset;
   ssize_t n = 0;
   while (size > 0) {
@@ -183,4 +198,4 @@ State PosixEnv::RenameFile(const std::string &from, const std::string &to) {
 
 // return State::Ok();
 //}
-} // namespace mxcdb
+} // namespace yubindb

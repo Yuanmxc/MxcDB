@@ -6,7 +6,7 @@ class SnapshotImpl;
 class Version;
 class VersionSet;
 
-namespace mxcdb {
+namespace yubindb {
 State DBImpl::Open(const Options &options, std::string_view name, DB **dbptr) {
   return State();
 }
@@ -130,4 +130,4 @@ WriteBatch *DBImpl::BuildBatchGroup(std::shared_ptr<Writer> *last_writer) {
 State DBImpl::MakeRoomForwrite(bool force) {
   // TODO
 }
-} // namespace mxcdb
+} // namespace yubindb

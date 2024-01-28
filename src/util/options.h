@@ -1,7 +1,7 @@
 #ifndef MXCDB_OPTIONS_H_
 #define MXCDB_OPTIONS_H_
 #include "../db/snapshot.h"
-namespace mxcdb {
+namespace yubindb {
 
 struct WriteOptions {
   WriteOptions() { sync = false; }
@@ -17,5 +17,5 @@ struct ReadOptions {
   bool fill_cache = true;
   const Snapshot *snapshot = nullptr;
 };
-} // namespace mxcdb
+} // namespace yubindb
 #endif

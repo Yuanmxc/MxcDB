@@ -17,7 +17,7 @@
 #include "walog.h"
 #include "writebatch.h"
 
-namespace mxcdb {
+namespace yubindb {
 
 struct Options;
 struct ReadOptions;
@@ -58,6 +58,8 @@ public:
   State MakeRoomForwrite(bool force);
   State InsertInto(WriteBatch *batch, Memtable *mem);
   WriteBatch *BuildBatchGroup(std::shared_ptr<Writer> *last_writer);
+  const Snapshot *GetSnapshot();
+  void ReleaseSnapshot(const Snapshot *snapshot);
 
 private:
   struct Writer {
@@ -98,6 +100,6 @@ private:
   VersionSet *const versions_;
   State stats_[kNumLevels];
 };
-} // namespace mxcdb
+} // namespace yubindb
 
 #endif

@@ -1,5 +1,5 @@
 #include "memtable.h"
-namespace mxcdb {
+namespace yubindb {
 void Memtable::FindShortestSeparator(std::string *start,
                                      std::string_view limit) {}
 void Memtable::FindShortSuccessor(std::string *key) {}
@@ -23,9 +23,21 @@ void Memtable::Add(SequenceNum seq, Valuetype type, std::string_view key,
   std::memcpy(p, value.data(), val_size);
   table->Insert(SkiplistKey(buf, internal_size));
 }
-bool Get(const Lookey &key, std::string *value, State *s) {
-  std::string_view skipkey = key.skiplist_key();
-  table->Seek(skipkey.data());
+bool Memtable::Get(const Lookey &key, std::string_view *value, State *s) {
+  SkiplistKey skipkey(key.skiplist_key().data(), key.getinterlen());
+  skiplist_node *t = table->Seek(skipkey);
+  if (t != nullptr) {
+    node *found = _get_entry(t, node, snode);
+    if ((found->key.Getag() & 0xf) == kTypeValue) {
+      std::string_view p(found->key.getview());
+      value = &p;
+      return true;
+    } else if ((found->key.Getag() & 0xf) == kTypeDeletion) {
+      return false;
+    }
+  } else {
+    return false;
+  }
 }
 
-} // namespace mxcdb
+} // namespace yubindb

@@ -1,5 +1,5 @@
 #include "arena.h"
-namespace mxcdb {
+namespace yubindb {
 char *Arena::Alloc(size_t size) {
   assert(size > 0);
   if (size < alloc_remaining) {
@@ -45,4 +45,4 @@ char *Arena::AllocAligned(size_t size) {
     return AllocateFallback(size);
   }
 }
-} // namespace mxcdb
+} // namespace yubindb

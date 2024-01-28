@@ -9,14 +9,18 @@
 #include "common.h"
 #include "key.h"
 #include "skiplist.h"
-namespace mxcdb {
+namespace yubindb {
 typedef uint64_t SequenceNum;
 enum Valuetype {
   kTypeDeletion = 0X0,
   kTypeValue = 0x1,
 };
+static const Valuetype kValueTypeForSeek = kTypeValue;
 using keycomper = std::function<bool(std::string_view, std::string_view)>;
 static const SequenceNum kMaxSequenceNumber = ((0x1ull << 56) - 1); // max seq
+static uint64_t PackSequenceAndType(uint64_t seq, Valuetype t) {
+  return (seq << 8) | t;
+}
 static std::string_view ExtractUserKey(std::string_view internal_key) {
   assert(internal_key.size() >= 8);
   return std::string_view(internal_key.data(), internal_key.size() - 8);
@@ -63,7 +67,7 @@ public:
     return std::string_view(start + sizeof(interlen),
                             end - start - sizeof(interlen));
   }
-  size_t getinterlen() { return interlen; }
+  size_t getinterlen() const { return interlen; }
   // Return the user key
   std::string_view key() const {
     return std::string_view(start + sizeof(interlen),
@@ -84,18 +88,23 @@ private:
 //    value    char[vlength]
 class SkiplistKey { // for skiplist
 public:
-  explicit SkiplistKey(char *p, size_t intersizelen_)
+  explicit SkiplistKey(const char *p, size_t intersizelen_)
       : str(p), interlen(intersizelen_) {}
   ~SkiplistKey() = default;
-  std::string_view getview() {
+  std::string_view getview() const {
     return std::string_view(str + sizeof(interlen), interlen);
   }
+  size_t getintersize() { return interlen; }
+  uint64_t Getag();
   std::string_view gettrueview() { return std::string_view(str); }
-  SkiplistKey &operator=(const SkiplistKey &a) { str = a.str; }
+  SkiplistKey &operator=(const SkiplistKey &a) {
+    str = a.str;
+    return *this;
+  }
 
 private:
-  char *str;
+  const char *str;
   size_t interlen;
 };
-} // namespace mxcdb
+} // namespace yubindb
 #endif

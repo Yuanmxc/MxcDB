@@ -6,7 +6,7 @@
 #include "../util/arena.h"
 #include "../util/key.h"
 #include "../util/skiplistpg.h"
-namespace mxcdb {
+namespace yubindb {
 class Memtable {
 public:
   explicit Memtable();
@@ -20,17 +20,13 @@ public:
   // Iterator* NewIterator(); //TODO?
   void Add(SequenceNum seq, Valuetype type, std::string_view key,
            std::string_view value);
-  bool Get(const Lookey &key, std::string *value, State *s);
-
-  // abput iterator
-  skiplist_node *Seek(std::string_view k) { table->Seek(EncodeKey(&tmp_, k)); }
-  skiplist_node *SeekToFirst() { table.SeekToFirst(); }
-  skiplist_node *SeekToLast() { table.SeekToLast(); }
+  bool Get(const Lookey &key, std::string_view *value, State *s);
 
 private:
   std::unique_ptr<Skiplist> table;
   std::unique_ptr<Arena> arena;
+  std::string tmp;
 };
 
-} // namespace mxcdb
+} // namespace yubindb
 #endif

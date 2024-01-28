@@ -9,7 +9,7 @@
 #include "common.h"
 
 constexpr const size_t kWritableFileBufferSize = 64 * 1024;
-namespace mxcdb {
+namespace yubindb {
 // 顺序写入
 class WritableFile {
 public:
@@ -43,9 +43,9 @@ public:
 private:
   char buf_[kWritableFileBufferSize];
   size_t offset;
+  int fd;
   const std::string filestr;
   const std::string dirstr;
-  int fd;
   const bool ismainifset;
 };
 // 顺序读取
@@ -88,5 +88,5 @@ private:
   std::unordered_map<int, std::string> filelock;
   std::mutex filemutex; // lock filelock
 };
-} // namespace mxcdb
+} // namespace yubindb
 #endif
