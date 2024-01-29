@@ -1,8 +1,8 @@
 #include "memtable.h"
 namespace mxcdb {
-void Memtable::FindShortestSeparator(std::string *start,
+void Memtable::FindShortestSeparator(std::string* start,
                                      std::string_view limit) {}
-void Memtable::FindShortSuccessor(std::string *key) {}
+void Memtable::FindShortSuccessor(std::string* key) {}
 size_t Memtable::ApproximateMemoryUsage() {}
 // Iterator* NewIterator(); //TODO?
 void Memtable::Add(SequenceNum seq, Valuetype type, std::string_view key,
@@ -12,9 +12,9 @@ void Memtable::Add(SequenceNum seq, Valuetype type, std::string_view key,
   size_t internal_size = key_size + 8;
   const size_t encond_len =
       internal_size + internal_size + VarintLength(val_size) + val_size;
-  char *buf = arena->Alloc(encond_len);
-  std::memcpy(buf, (char *)(&internal_size), sizeof(internal_size));
-  char *p = buf + sizeof(internal_size);
+  char* buf = arena->Alloc(encond_len);
+  std::memcpy(buf, (char*)(&internal_size), sizeof(internal_size));
+  char* p = buf + sizeof(internal_size);
   std::memcpy(p, key.data(), key_size);
   p += key_size;
   EncodeFixed64(p, (seq << 8 | type));
@@ -23,11 +23,11 @@ void Memtable::Add(SequenceNum seq, Valuetype type, std::string_view key,
   std::memcpy(p, value.data(), val_size);
   table->Insert(SkiplistKey(buf, internal_size));
 }
-bool Memtable::Get(const Lookey &key, std::string_view *value, State *s) {
+bool Memtable::Get(const Lookey& key, std::string_view* value, State* s) {
   SkiplistKey skipkey(key.skiplist_key().data(), key.getinterlen());
-  skiplist_node *t = table->Seek(skipkey);
+  skiplist_node* t = table->Seek(skipkey);
   if (t != nullptr) {
-    node *found = _get_entry(t, node, snode);
+    node* found = _get_entry(t, node, snode);
     if ((found->key.Getag() & 0xf) == kTypeValue) {
       std::string_view p(found->key.getview());
       value = &p;
@@ -40,4 +40,4 @@ bool Memtable::Get(const Lookey &key, std::string_view *value, State *s) {
   }
 }
 
-} // namespace mxcdb
+}  // namespace mxcdb

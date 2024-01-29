@@ -6,7 +6,7 @@
 #include "../util/arena.h"
 #include "../util/key.h"
 #include "../util/skiplistpg.h"
-namespace yubindb {
+namespace mxcdb {
 class Memtable {
 public:
   explicit Memtable();
@@ -28,5 +28,5 @@ private:
   std::string tmp;
 };
 
-} // namespace yubindb
+} // namespace mxcdb
 #endif

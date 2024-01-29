@@ -7,7 +7,7 @@
 #include "arena.h"
 #include "key.h"
 #include "skiplist.h"
-namespace yubindb {
+namespace mxcdb {
 struct node {
 public:
   node() = default;
@@ -51,5 +51,5 @@ private:
   skiplist_raw table;
   std::unique_ptr<Arena> arena; // for new and delete
 };
-} // namespace yubindb
+} // namespace mxcdb
 #endif

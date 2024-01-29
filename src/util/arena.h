@@ -5,8 +5,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <vector>
-namespace yubindb {
-static const int kBlockSize = 4096;
+namespace mxcdb {
+static const int BlockSize = 4096;
 class Arena {
 public:
   Arena() : alloc_ptr(nullptr), alloc_remaining(0), memory_usage(0) {}
@@ -34,5 +34,5 @@ private:
   std::vector<char *> blocks; // for delete
   std::atomic<size_t> memory_usage;
 };
-} // namespace yubindb
+} // namespace mxcdb
 #endif

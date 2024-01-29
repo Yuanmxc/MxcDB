@@ -1,20 +1,43 @@
 #ifndef MXCDB_ENV_H_
 #define MXCDB_ENV_H_
+#include <condition_variable>
 #include <cstdio>
 #include <mutex>
+#include <queue>
+#include <set>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 
 #include "common.h"
 
 constexpr const size_t kWritableFileBufferSize = 64 * 1024;
-namespace yubindb {
+namespace mxcdb {
+class Logger {
+public:
+  Logger() = default;
+
+  Logger(const Logger &) = delete;
+  Logger &operator=(const Logger &) = delete;
+  virtual ~Logger();
+  // Write format.
+  virtual void Logv(const char *format, va_list ap) = 0;
+};
+class FileLock {
+public:
+  FileLock(int fd, std::string filename)
+      : fd_(fd), filename_(std::move(filename)) {}
+
+  int fd() const { return fd_; }
+  const std::string &filename() const { return filename_; }
+
+  const int fd_;
+  const std::string filename_;
+};
 // 顺序写入
 class WritableFile {
 public:
   explicit WritableFile(std::string str_, int fd_)
-      : offset(0), filestr(std::move(str_)), dirstr(Dirname(filestr)), fd(fd_),
+      : offset(0), fd(fd_), filestr(std::move(str_)), dirstr(Dirname(filestr)),
         ismainifset(Ismainset(filestr)) {}
   ~WritableFile();
   WritableFile(const WritableFile &) = delete;
@@ -79,14 +102,37 @@ public:
                         std::unique_ptr<WritableFile> result);
   State NewAppendableFile(const std::string &filename,
                           std::unique_ptr<WritableFile> result);
+  State GetFileSize(const std::string &filename, uint64_t *size);
+  State CreateDir(const std::string &dirname);
+  State DeleteDir(const std::string &dirname);
   State DeleteFile(const std::string &filename);
   State RenameFile(const std::string &from, const std::string &to);
-  // State LockFile(const std::string& filename);
-  // State UnlockFile(const std::string& filename);
+  State LockFile(const std::string &filename, std::unique_ptr<FileLock> lock);
+  State UnlockFile(std::unique_ptr<FileLock> lock);
+  void Schedule(void (*background_function)(void *background_arg),
+                void *background_arg);
+  void StartThread(void (*thread_main)(void *thread_main_arg),
+                   void *thread_main_arg);
+  State NewLogger(const std::string &filename, std::unique_ptr<Logger> result);
 
 private:
-  std::unordered_map<int, std::string> filelock;
+  struct BackgroundWorkItem {
+    explicit BackgroundWorkItem(void (*function)(void *arg), void *arg)
+        : function(function), arg(arg) {}
+
+    void (*const function)(void *);
+    void *const arg;
+  };
+  // background
+  void BackgroundThreadMain();
+  std::mutex background_work_mutex;
+  std::condition_variable background_work_cond;
+  std::queue<BackgroundWorkItem> background_work_queue;
+  bool started_background_thread;
+
+  // filemutex
+  std::set<std::string> filelock;
   std::mutex filemutex; // lock filelock
 };
-} // namespace yubindb
+} // namespace mxcdb
 #endif

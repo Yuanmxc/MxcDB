@@ -9,7 +9,7 @@
 #include "common.h"
 #include "key.h"
 #include "skiplist.h"
-namespace yubindb {
+namespace mxcdb {
 typedef uint64_t SequenceNum;
 enum Valuetype {
   kTypeDeletion = 0X0,
@@ -44,6 +44,7 @@ public:
     Key.append(str.data(), str.size());
     PutFixed64(&Key, parser(num, type));
   }
+  InternalKey() {}
   ~InternalKey();
   std::string_view getview() { return std::string_view(Key); }
   uint64_t parser(SequenceNum num, Valuetype type);
@@ -106,5 +107,5 @@ private:
   const char *str;
   size_t interlen;
 };
-} // namespace yubindb
+} // namespace mxcdb
 #endif

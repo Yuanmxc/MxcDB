@@ -5,7 +5,7 @@
 #include <string_view>
 
 #include "spdlog/spdlog.h"
-namespace yubindb {
+namespace mxcdb {
 
 typedef uint64_t SequenceNum;
 
@@ -142,5 +142,5 @@ private:
   static const char *CopyState(const char *s);
   const char *state_;
 };
-} // namespace yubindb
+} // namespace mxcdb
 #endif

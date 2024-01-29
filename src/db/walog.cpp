@@ -6,7 +6,7 @@ namespace mxcdb {
 
 State walWriter::Appendrecord(std::string_view str) {
   uint64_t size = str.size();
-  const char *ptr = str.data();
+  const char* ptr = str.data();
   bool begin = true, end;
   RecordType type;
   State s;
@@ -35,7 +35,7 @@ State walWriter::Appendrecord(std::string_view str) {
   }
   return s;
 }
-State walWriter::Flushphyrecord(RecordType type, const char *buf_,
+State walWriter::Flushphyrecord(RecordType type, const char* buf_,
                                 size_t size) {
   assert(block_offset + kHeaderSize + size <= kBlockSize);
   char buf[3];
@@ -44,11 +44,11 @@ State walWriter::Flushphyrecord(RecordType type, const char *buf_,
   buf[2] = type;
   uint32_t check_sum = crc32c::Crc32c(buf_, size);
   State s;
-  s = file->Append((char *)&check_sum, sizeof(check_sum)); // crc
+  s = file->Append((char*)&check_sum, sizeof(check_sum));  // crc
   if (!s.ok()) {
     return s;
   }
-  s = file->Append(buf, sizeof(buf)); // size + type
+  s = file->Append(buf, sizeof(buf));  // size + type
   if (!s.ok()) {
     return s;
   }
@@ -60,4 +60,4 @@ State walWriter::Flushphyrecord(RecordType type, const char *buf_,
   block_offset += kHeaderSize + size;
   return s;
 }
-} // namespace mxcdb
+}  // namespace mxcdb

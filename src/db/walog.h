@@ -8,7 +8,7 @@
 #include "block.h"
 #include "crc32c/crc32c.h"
 
-namespace yubindb {
+namespace mxcdb {
 
 enum RecordType {
   // zero is reserved for preallocated files
@@ -56,5 +56,5 @@ public:
 
 private:
 };
-} // namespace yubindb
+} // namespace mxcdb
 #endif

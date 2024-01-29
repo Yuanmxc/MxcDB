@@ -7,6 +7,7 @@
 #include <mutex>
 #include <set>
 #include <stdio.h>
+#include <string>
 #include <string_view>
 
 #include "../util/common.h"
@@ -17,9 +18,8 @@
 #include "walog.h"
 #include "writebatch.h"
 
-namespace yubindb {
+namespace mxcdb {
 
-struct Options;
 struct ReadOptions;
 struct WriteOptions;
 struct Writer;
@@ -32,8 +32,6 @@ class DB {
 public:
   explicit DB() {}
   virtual ~DB() = 0;
-  virtual State Open(const Options &options, std::string_view name,
-                     DB **dbptr) = 0;
   virtual State Put(const WriteOptions &options, std::string_view key,
                     std::string_view value) = 0;
   virtual State Delete(const WriteOptions &options, std::string_view key) = 0;
@@ -43,23 +41,19 @@ private:
 };
 class DBImpl : public DB {
 public:
-  explicit DBImpl(const Options opt, const std::string dbname);
+  explicit DBImpl(const Options &opt, const std::string dbname);
   DBImpl(const DBImpl &) = delete;
   DBImpl &operator=(const DBImpl &) = delete;
   ~DBImpl() { mutex.unlock(); };
-  State Open(const Options &options, std::string_view name,
-             DB **dbptr) override;
+  static State Open(const Options &options, std::string name, DB **dbptr);
   State Put(const WriteOptions &options, std::string_view key,
             std::string_view value) override;
   State Delete(const WriteOptions &options, std::string_view key) override;
   State Write(const WriteOptions &options, WriteBatch *updates) override;
   State Get(const ReadOptions &options, std::string_view key,
-            std::string *value);
-  State MakeRoomForwrite(bool force);
+            std::string_view *value);
   State InsertInto(WriteBatch *batch, Memtable *mem);
-  WriteBatch *BuildBatchGroup(std::shared_ptr<Writer> *last_writer);
   const Snapshot *GetSnapshot();
-  void ReleaseSnapshot(const Snapshot *snapshot);
 
 private:
   struct Writer {
@@ -84,6 +78,15 @@ private:
     WriteBatch *batch;
   };
   WriteBatch *BuildBatch(Writer **rul);
+  WriteBatch *BuildBatchGroup(std::shared_ptr<DBImpl::Writer> *last_writer);
+  State MakeRoomForwrite(bool force);
+  void ReleaseSnapshot(const Snapshot *snapshot);
+  State Recover(VersionEdit *edit, bool *save_manifest);
+  void MaybeCompaction();
+
+  const std::string dbname;
+  std::unique_ptr<FileLock> db_lock;
+
   std::mutex mutex;
   std::atomic<bool> shutting_down_;
   std::shared_ptr<Memtable> mem_; // now memtable
@@ -99,7 +102,8 @@ private:
   bool background_compaction_;
   VersionSet *const versions_;
   State stats_[kNumLevels];
+  PosixEnv *env;
 };
-} // namespace yubindb
+} // namespace mxcdb
 
 #endif

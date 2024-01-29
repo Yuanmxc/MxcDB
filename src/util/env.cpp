@@ -13,9 +13,9 @@ namespace mxcdb {
 State WritableFile::Append(std::string_view ptr) {
   return Append(ptr.data(), ptr.size());
 }
-State WritableFile::Append(const char *ptr, size_t size) {
+State WritableFile::Append(const char* ptr, size_t size) {
   size_t wrsize = std::min(size, kWritableFileBufferSize - offset);
-  const char *wrptr = ptr;
+  const char* wrptr = ptr;
   std::memcpy(buf_, ptr, wrsize);
   size -= wrsize;
   wrptr += wrsize;
@@ -44,7 +44,7 @@ State WritableFile::Close() {
   return s;
 }
 State WritableFile::Flush() {
-  char *t = buf_;
+  char* t = buf_;
   uint64_t size = offset;
   ssize_t n = 0;
   while (size > 0) {
@@ -63,7 +63,7 @@ State WritableFile::Flush() {
   offset = 0;
   return State::Ok();
 }
-State WritableFile::Sync(int fd, const std::string &pt) {
+State WritableFile::Sync(int fd, const std::string& pt) {
   if (ismainifset) {
     return SyncDirmainifset();
   }
@@ -95,7 +95,7 @@ State WritableFile::SyncDirmainifset() {
   }
   return State::Ok();
 }
-State PosixEnv::NewReadFile(const std::string &filename,
+State PosixEnv::NewReadFile(const std::string& filename,
                             std::unique_ptr<ReadFile> result) {
   int fd = ::open(filename.c_str(), O_RDONLY | O_CLOEXEC);
   if (fd < 0) {
@@ -107,7 +107,7 @@ State PosixEnv::NewReadFile(const std::string &filename,
   result = std::make_unique<ReadFile>(filename, fd);
   return State::Ok();
 }
-State PosixEnv::NewWritableFile(const std::string &filename,
+State PosixEnv::NewWritableFile(const std::string& filename,
                                 std::unique_ptr<WritableFile> result) {
   int fd =
       ::open(filename.c_str(), O_TRUNC | O_WRONLY | O_CREAT | O_CLOEXEC, 0644);
@@ -120,7 +120,7 @@ State PosixEnv::NewWritableFile(const std::string &filename,
   result = std::make_unique<WritableFile>(filename, fd);
   return State::Ok();
 }
-State PosixEnv::NewAppendableFile(const std::string &filename,
+State PosixEnv::NewAppendableFile(const std::string& filename,
                                   std::unique_ptr<WritableFile> result) {
   int fd =
       ::open(filename.c_str(), O_APPEND | O_WRONLY | O_CREAT | O_CLOEXEC, 0644);
@@ -133,7 +133,7 @@ State PosixEnv::NewAppendableFile(const std::string &filename,
   result = std::make_unique<WritableFile>(filename, fd);
   return State::Ok();
 }
-State PosixEnv::NewLogger(const std::string &filename,
+State PosixEnv::NewLogger(const std::string& filename,
                           std::unique_ptr<Logger> result) {
   int fd =
       ::open(filename.c_str(), O_APPEND | O_WRONLY | O_CREAT | O_CLOEXEC, 0644);
@@ -144,7 +144,7 @@ State PosixEnv::NewLogger(const std::string &filename,
     return State::IoError(filename.c_str());
   }
 
-  std::FILE *fp = ::fdopen(fd, "w");
+  std::FILE* fp = ::fdopen(fd, "w");
   if (fp == nullptr) {
     ::close(fd);
     result = nullptr;
@@ -156,7 +156,7 @@ State PosixEnv::NewLogger(const std::string &filename,
     return State::Ok();
   }
 }
-State PosixEnv::DeleteFile(const std::string &filename) {
+State PosixEnv::DeleteFile(const std::string& filename) {
   if (::unlink(filename.c_str()) != 0) {
     spdlog::error("error unlink: filename: {} err: {}", filename,
                   strerror(errno));
@@ -164,14 +164,14 @@ State PosixEnv::DeleteFile(const std::string &filename) {
   }
   return State::Ok();
 }
-State PosixEnv::RenameFile(const std::string &from, const std::string &to) {
+State PosixEnv::RenameFile(const std::string& from, const std::string& to) {
   if (::rename(from.c_str(), to.c_str()) != 0) {
     spdlog::error("error rename: filename: {} err: {}", from, strerror(errno));
     return State::IoError(from.c_str());
   }
   return State::Ok();
 }
-State PosixEnv::LockFile(const std::string &filename,
+State PosixEnv::LockFile(const std::string& filename,
                          std::unique_ptr<FileLock> lock) {
   int fd = ::open(filename.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, 0644);
   if (fd < 0) {
@@ -224,13 +224,13 @@ State PosixEnv::UnlockFile(std::unique_ptr<FileLock> lock) {
   lock.reset();
   return State::Ok();
 }
-void Schedule(void (*background_function)(void *background_arg),
-              void *background_arg) {}
-void StartThread(void (*thread_main)(void *thread_main_arg),
-                 void *thread_main_arg) {
+void Schedule(void (*background_function)(void* background_arg),
+              void* background_arg) {}
+void StartThread(void (*thread_main)(void* thread_main_arg),
+                 void* thread_main_arg) {
   std::thread threads(thread_main, thread_main_arg);
   thread.detach();
 }
 
 void BackgroundThreadMain() {}
-} // namespace mxcdb
+}  // namespace mxcdb
