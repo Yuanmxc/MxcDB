@@ -16,20 +16,24 @@ struct FileMate { // file mate
   InternalKey smallest;
   InternalKey largest;
 };
+enum Tag {
+  kLogNumber = 0,
+  kNextFileNumber = 1,
+  kLastSequence = 2,
+  kCompactPointer = 3,
+  kDeletedFile = 4,
+  kNewFile = 5,
+};
+
 class VersionEdit {
 public:
   VersionEdit() { Clear(); }
   ~VersionEdit() = default;
 
   void Clear();
-
   void SetLogNumber(uint64_t num) {
     has_log_number = true;
     log_number = num;
-  }
-  void SetPrevLogNumber(uint64_t num) {
-    has_prev_log_number = true;
-    prev_log_number = num;
   }
   void SetNextFile(uint64_t num) {
     has_next_file_number = true;
@@ -39,9 +43,8 @@ public:
     has_last_sequence = true;
     last_sequence = seq;
   }
-  // Add the specified file at the specified number.
-  // REQUIRES: This version has not been saved (see VersionSet::SaveTo)
-  // REQUIRES: "smallest" and "largest" are smallest and largest keys in file
+  // 在指定编号处添加指定文件。
+  // “smallest”和“largest”是文件中最小和最大的键
   void AddFile(int level, uint64_t file, uint64_t file_size,
                const InternalKey &smallest, const InternalKey &largest) {
     FileMate f;
@@ -58,9 +61,7 @@ public:
   }
 
   void EncodeTo(std::string *dst) const;
-  State DecodeFrom(std::string_view &src);
-
-  std::string DebugString() const;
+  State DecodeFrom(std::string_view src);
 
 private:
   friend class VersionSet;
@@ -68,12 +69,10 @@ private:
   typedef std::set<std::pair<int, uint64_t>> DeletedFileSet;
 
   uint64_t log_number;
-  uint64_t prev_log_number;
   uint64_t next_file_number;
   SequenceNum last_sequence;
   bool has_comparator;
   bool has_log_number;
-  bool has_prev_log_number;
   bool has_next_file_number;
   bool has_last_sequence;
 

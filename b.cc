@@ -1,7 +1,20 @@
 #include <deque>
 #include <memory.h>
-using namespace std;
-int main() {
-  deque<int> p;
-  p.front();
-}
+#include <stdio.h>
+#include <string_view>
+#include <thread>
+#include <unistd.h>
+
+// void fun(void* p) {
+//   int s = *(int*)p;
+//   while (1) {
+//     printf("p");
+//   }
+// }
+// int main() {
+//   int s = 14;
+//   std::thread p(fun, &s);
+//   p.detach();
+//   ::sleep(10);
+//   return 0;
+// }

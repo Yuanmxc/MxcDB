@@ -1,5 +1,7 @@
 #include "db.h"
 
+#include <memory.h>
+
 #include "../util/filename.h"
 #include "spdlog/spdlog.h"
 #include "version_edit.h"
@@ -8,12 +10,75 @@ class Version;
 class VersionSet;
 
 namespace mxcdb {
+State DBImpl::NewDB() {
+  VersionEdit new_db;
+  new_db.SetLogNumber(0);
+  new_db.SetNextFile(2);
+  new_db.SetLastSequence(0);
+
+  const std::string manifest = DescriptorFileName(dbname, 1);
+  std::unique_ptr<WritableFile> file;
+  State s = env->NewWritableFile(manifest, file);
+  if (!s.ok()) {
+    return s;
+  }
+  {
+    walWriter loger(file.release());
+    std::string record;
+    new_db.EncodeTo(&record);
+    s = loger.Appendrecord(record);
+    if (s.ok()) {
+      s = file->Close();
+    }
+  }
+  if (s.ok()) {
+    // Make "CURRENT" file that points to the new manifest file.
+    s = SetCurrentFile(env, dbname, 1);
+  } else {
+    env->DeleteFile(manifest);
+  }
+  return s;
+}
+DBImpl::DBImpl(const Options &opt, const std::string dbname)
+    : env(new PosixEnv), opts(opt), dbname(dbname),
+      table_cache(new TableCache(dbname, options)), db_lock(nullptr),
+      shutting_down_(false), mem_(nullptr), imm_(nullptr), has_imm_(false),
+      logfile(nullptr), logfilenum(0), log_(nullptr), batch(new WriteBatch),
+      background_compaction(false),
+      versions_(new VersionSet(dbname_, &options_, table_cache_,
+                               &internal_comparator_)) {}
+DBImpl::~DBImpl() {
+  std::unique_lock<std::mutex> lk(mutex);
+  shutting_down_.store(true, std::std::memory_order_release);
+  while (background_compaction_) {
+    background_work_cond.wait(&lk);
+  }
+  lk.unlock();
+  if (db_lock != nullptr) {
+    env->UnlockFile(db_lock);
+  }
+}
 // 该方法会检查Lock文件是否被占用（LevelDB通过名为LOCK的文件避免多个LevelDB进程同时访问一个数据库）、
 // 目录是否存在、Current文件是否存在等。然后主要通过VersionSet::Recover与DBImpl::RecoverLogFile
 // 两个方法，分别恢复其VersionSet的状态与MemTable的状态。
 State DBImpl::Recover(VersionEdit *edit, bool *save_manifest) {
   env->CreateDir(dbname);
   State s = env->LockFile(LockFileName(dbname), db_lock);
+  if (!s.ok()) {
+    return s;
+  }
+  if (!env->FileExists(CurrentFileName(dbname))) {
+    s = NewDB();
+    if (!s.ok()) {
+      return s;
+    }
+  }
+  s = versions_->Recover(save_manifest);
+  if (!s.ok()) {
+    return s;
+  }
+  SequenceNum max_sequence(0);
+  // TODO
 }
 State DBImpl::Open(const Options &options, std::string name, DB **dbptr) {
   *dbptr = nullptr;
@@ -27,25 +92,23 @@ State DBImpl::Open(const Options &options, std::string name, DB **dbptr) {
   if (s.ok() && impl->mem_ == nullptr) {
     // Create new log and a corresponding memtable.
     uint64_t new_log_number = impl->versions_->NewFileNumber();
-    WritableFile *lfile;
+    std::unique_ptr<WritableFile> lfile;
     s = impl->env->NewWritableFile(LogFileName(name, new_log_number), &lfile);
     if (s.ok()) {
       edit.SetLogNumber(new_log_number);
       impl->logfile = lfile;
-      impl->logfile_number_ = new_log_number;
-      impl->log_ = new log::Writer(lfile);
-      impl->mem_ = new MemTable(impl->internal_comparator_);
-      impl->mem_->Ref();
+      impl->logfilenum = new_log_number;
+      impl->logwrite = std::make_unique<walWriter>(lfile);
+      impl->mem_ = std::make_shared<MemTable>();
     }
   }
   if (s.ok() && save_manifest) {
-    edit.SetPrevLogNumber(0); // No older logs needed after recovery.
-    edit.SetLogNumber(impl->logfile_number_);
+    edit.SetLogNumber(impl->logfilenum);
     s = impl->versions_->LogAndApply(&edit, &impl->mutex_);
   }
   if (s.ok()) {
-    impl->DeleteObsoleteFiles();
-    impl->MaybeScheduleCompaction();
+    impl->DeleteObsoleteFiles(); // 删除过期文件
+    impl->MaybeCompaction();
   }
   impl->mutex_.Unlock();
   if (s.ok()) {
@@ -176,6 +239,41 @@ DBImpl::BuildBatchGroup(std::shared_ptr<DBImpl::Writer> *last_writer) {
 }
 State DBImpl::MakeRoomForwrite(bool force) {
   // TODO
+  bool allow_delay = !force;
+  State s;
+  while (true) {
+    if (!bg_error.ok()) {
+      s = bg_error;
+      break;
+    } else if (allow_delay && versions_->NumLeve) {
+    }
+  }
 }
-void DBImpl::MaybeCompaction() {}
+void DBImpl::MaybeCompaction() {
+  if (background_compaction_) {
+    // Already scheduled
+  } else if (shutting_down_.load(std::memory_order_acquire)) {
+  } else if (!bg_error.ok()) {
+  } else {
+    background_scheduled_ = true;
+    env_->Schedule(&BackgroundCall(), this);
+  }
+}
+void DBImpl::BackgroundCall() {
+  std::unique_lock l(&mutex_);
+  if (shutting_down_.load(std::memory_order_acquire)) {
+  } else if (!bg_error.ok()) {
+  } else {
+    BackgroundCompaction();
+  }
+
+  background_compaction_ = false;
+
+  // Previous compaction may have produced too many files in a level,
+  // so reschedule another compaction if needed.
+  MaybeCompaction();
+  background_work_finished_signal.notify_all();
+}
+void DBImpl::BackgroundCompaction() { // TODO doing compaction
+}
 } // namespace mxcdb
