@@ -10,7 +10,7 @@ public:
 class SnapshotImpl : public Snapshot {
 public:
   explicit SnapshotImpl(SequenceNum seq) : snap_seq(seq) {}
-  ~SnapshotImpl();
+  ~SnapshotImpl() = default;
   SequenceNum sequence() const { return snap_seq; }
 
 private:

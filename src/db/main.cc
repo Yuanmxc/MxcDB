@@ -2,8 +2,9 @@
 #include <iostream>
 #include <string>
 
+#include "../util/common.h"
 #include "db.h"
-
+#include "writebatch.h"
 int main() {
   mxcdb::DB *db;
   mxcdb::Options opt;

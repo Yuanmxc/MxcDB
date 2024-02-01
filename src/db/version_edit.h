@@ -8,7 +8,7 @@
 namespace mxcdb {
 struct FileMate { // file mate
   FileMate() = default;
-  ~FileMate();
+  ~FileMate() = default;
   int re;
   bool seek; // if compaction is not
   uint64_t num;

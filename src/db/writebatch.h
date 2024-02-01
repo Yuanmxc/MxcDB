@@ -11,7 +11,7 @@ class Memtable; //
 class WriteBatch {
 public:
   WriteBatch() { Clear(); };
-  ~WriteBatch();
+  ~WriteBatch() = default;
   WriteBatch(const WriteBatch &) = default;
   WriteBatch &operator=(const WriteBatch &) = default;
   void Put(std::string_view key, std::string_view value);

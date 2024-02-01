@@ -17,13 +17,13 @@ State DBImpl::NewDB() {
   new_db.SetLastSequence(0);
 
   const std::string manifest = DescriptorFileName(dbname, 1);
-  std::unique_ptr<WritableFile> file;
+  std::shared_ptr<WritableFile> file;
   State s = env->NewWritableFile(manifest, file);
   if (!s.ok()) {
     return s;
   }
   {
-    walWriter loger(file.release());
+    walWriter loger(file);
     std::string record;
     new_db.EncodeTo(&record);
     s = loger.Appendrecord(record);
@@ -39,13 +39,13 @@ State DBImpl::NewDB() {
   }
   return s;
 }
-DBImpl::DBImpl(const Options &opt, const std::string &dbname)
+DBImpl::DBImpl(const Options *opt, const std::string &dbname)
     : env(new PosixEnv), opts(opt), dbname(dbname),
       table_cache(new TableCache(dbname, opt)), db_lock(nullptr),
       shutting_down_(false), mem_(nullptr), imm_(nullptr), has_imm_(false),
       logfile(nullptr), logfilenum(0), logwrite(nullptr), batch(new WriteBatch),
       background_compaction_(false),
-      versions_(new VersionSet(dbname, &opt, table_cache)) {}
+      versions_(new VersionSet(dbname, opt, table_cache)) {}
 DBImpl::~DBImpl() {
   std::unique_lock<std::mutex> lk(mutex);
   shutting_down_.store(true, std::memory_order_release);
@@ -54,7 +54,7 @@ DBImpl::~DBImpl() {
   }
   lk.unlock();
   if (db_lock != nullptr) {
-    env->UnlockFile(db_lock.get());
+    env->UnlockFile(db_lock);
   }
 }
 // 该方法会检查Lock文件是否被占用（LevelDB通过名为LOCK的文件避免多个LevelDB进程同时访问一个数据库）、
@@ -82,7 +82,7 @@ State DBImpl::Recover(VersionEdit *edit, bool *save_manifest) {
 State DBImpl::Open(const Options &options, std::string name, DB **dbptr) {
   *dbptr = nullptr;
 
-  DBImpl *impl = new DBImpl(options, name);
+  DBImpl *impl = new DBImpl(&options, name);
   impl->mutex.lock();
   VersionEdit edit;
   // Recover handles create_if_missing, error_if_exists
@@ -91,25 +91,25 @@ State DBImpl::Open(const Options &options, std::string name, DB **dbptr) {
   if (s.ok() && impl->mem_ == nullptr) {
     // Create new log and a corresponding memtable.
     uint64_t new_log_number = impl->versions_->NewFileNumber();
-    std::unique_ptr<WritableFile> lfile;
-    s = impl->env->NewWritableFile(LogFileName(name, new_log_number), &lfile);
+    std::shared_ptr<WritableFile> lfile;
+    s = impl->env->NewWritableFile(LogFileName(name, new_log_number), lfile);
     if (s.ok()) {
       edit.SetLogNumber(new_log_number);
       impl->logfile = lfile;
       impl->logfilenum = new_log_number;
       impl->logwrite = std::make_unique<walWriter>(lfile);
-      impl->mem_ = std::make_shared<MemTable>();
+      impl->mem_ = std::make_shared<Memtable>();
     }
   }
   if (s.ok() && save_manifest) {
     edit.SetLogNumber(impl->logfilenum);
-    s = impl->versions_->LogAndApply(&edit, &impl->mutex_);
+    s = impl->versions_->LogAndApply(&edit, &impl->mutex);
   }
   if (s.ok()) {
     impl->DeleteObsoleteFiles(); // 删除过期文件
     impl->MaybeCompaction();
   }
-  impl->mutex_.Unlock();
+  impl->mutex.unlock();
   if (s.ok()) {
     assert(impl->mem_ != nullptr);
     *dbptr = impl;
@@ -244,7 +244,8 @@ State DBImpl::MakeRoomForwrite(bool force) {
     if (!bg_error.ok()) {
       s = bg_error;
       break;
-    } else if (allow_delay && versions_->NumLeve) {
+    } else if (allow_delay &&
+               versions_->NumLevelFiles(0) >= config::kL0_SlowdownWrites) {
     }
   }
 }
@@ -254,12 +255,12 @@ void DBImpl::MaybeCompaction() {
   } else if (shutting_down_.load(std::memory_order_acquire)) {
   } else if (!bg_error.ok()) {
   } else {
-    background_scheduled_ = true;
-    env_->Schedule(&BackgroundCall(), this);
+    background_compaction_ = true;
+    env->Schedule(std::bind(&DBImpl::BackgroundCall, this));
   }
 }
 void DBImpl::BackgroundCall() {
-  std::unique_lock l(&mutex_);
+  std::unique_lock<std::mutex> lk(mutex);
   if (shutting_down_.load(std::memory_order_acquire)) {
   } else if (!bg_error.ok()) {
   } else {
