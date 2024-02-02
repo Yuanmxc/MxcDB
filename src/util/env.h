@@ -12,11 +12,19 @@
 #include <unistd.h>
 
 #include "common.h"
+#include "filename.h"
 
 namespace mxcdb {
+const int kNumNonTableCacheFiles = 10;
+
+class PosixEnv;
+
 constexpr const size_t kWritableFileBufferSize = 64 * 1024;
+static std::string_view Basename(const std::string &filename);
+static bool Ismanifest(const std::string &filename);
 static std::string Dirname(const std::string &filename);
-class DBImpl;
+State WriteStringToFile(PosixEnv *env, std::string_view data,
+                        const std::string &fname, bool sync);
 class FileLock {
 public:
   FileLock(int fd, std::string filename)
@@ -33,7 +41,7 @@ class WritableFile {
 public:
   explicit WritableFile(std::string str_, int fd_)
       : offset(0), fd(fd_), filestr(std::move(str_)), dirstr(Dirname(filestr)),
-        ismainifset(Ismainset(filestr)) {}
+        ismainifset(Ismanifest(filestr)) {}
   ~WritableFile() = default;
   WritableFile(const WritableFile &) = delete;
   WritableFile &operator=(const WritableFile &) = delete;
@@ -41,7 +49,6 @@ public:
   State Append(std::string_view ptr);
   State Append(const char *ptr, size_t size);
   std::string_view Name() { return std::string_view(filestr); }
-  bool Ismainset(std::string_view s);
   State Close();
   State Flush(); // flush是将我们自己的缓冲写入文件
   State Sync() { return Sync(fd, filestr); }
@@ -71,7 +78,7 @@ private:
   std::string str;
   int fd;
 };
-class PosixEnv {
+class PosixEnv { // TODO static
 public:
   typedef std::function<void()> backwork;
   PosixEnv() = default;
@@ -92,6 +99,8 @@ public:
                           std::unique_ptr<WritableFile> &result);
   State GetFileSize(const std::string &filename, uint64_t *size);
   State CreateDir(const std::string &dirname);
+  State GetChildren(const std::string &directory_path,
+                    std::vector<std::string> *result);
   State DeleteDir(const std::string &dirname);
   State DeleteFile(const std::string &filename);
   State RenameFile(const std::string &from, const std::string &to);
@@ -118,23 +127,5 @@ private:
   std::set<std::string> filelock;
   std::mutex filemutex; // lock filelock
 };
-
-static State WriteStringToFile(PosixEnv *env, std::string_view data,
-                               const std::string &fname, bool sync) {
-  std::unique_ptr<WritableFile> file;
-  State s = env->NewWritableFile(fname, file);
-  if (!s.ok()) {
-    return s;
-  }
-  s = file->Append(data);
-  if (s.ok() && sync) {
-    s = file->Sync();
-  }
-  file.reset();
-  if (!s.ok()) {
-    env->DeleteFile(fname);
-  }
-  return s;
-}
 } // namespace mxcdb
 #endif

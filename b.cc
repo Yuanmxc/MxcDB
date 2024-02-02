@@ -1,31 +1,16 @@
-#include <deque>
-#include <memory.h>
+#include <functional>
+#include <iostream>
+#include <map>
+#include <memory>
 #include <stdio.h>
+#include <string>
 #include <string_view>
-#include <thread>
-#include <unistd.h>
-class P {
-public:
-  P() {
-    int b = 17;
-    a = &b;
-  }
-  ~P() = default;
-  void fun() {
-    int s = *(int *)a;
-    while (1) {
-      printf("s");
-    }
-  }
 
-private:
-  void *a;
-};
 int main() {
-  int s = 14;
-  P ap;
-  std::thread p(&P::fun, &ap);
-  p.detach();
-  ::sleep(10);
+  std::string_view p("123456");
+  std::string_view pp(p.substr(0, 4));
+  std::string_view sp("123");
+  std::cout << p << std::endl;
+  std::cout << pp.compare(sp) << std::endl;
   return 0;
 }

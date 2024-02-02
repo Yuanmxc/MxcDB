@@ -1,8 +1,8 @@
 #ifndef MXCDB_OPTIONS_H_
 #define MXCDB_OPTIONS_H_
-#include "../db/snapshot.h"
 #include "env.h"
 namespace mxcdb {
+class Snapshot;
 const static int kNumLevels = 7;
 struct Options {
   // Create an Options object with default values for all fields.

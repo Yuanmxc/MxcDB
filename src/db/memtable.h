@@ -4,12 +4,13 @@
 #include <string_view>
 
 #include "../util/arena.h"
+#include "../util/cache.h"
 #include "../util/key.h"
 #include "../util/skiplistpg.h"
 namespace mxcdb {
 class Memtable {
 public:
-  explicit Memtable();
+  explicit Memtable() = default; // TODO
   ~Memtable() = default;
 
   Memtable(const Memtable &) = delete;
@@ -24,6 +25,7 @@ public:
 
 private:
   std::unique_ptr<Skiplist> table;
+  // std::unique_ptr<LruCache> cache;
   std::unique_ptr<Arena> arena;
   std::string tmp;
 };

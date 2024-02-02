@@ -4,13 +4,8 @@
 namespace mxcdb {
 class Snapshot {
 public:
-  Snapshot() = default;
-  virtual ~Snapshot();
-};
-class SnapshotImpl : public Snapshot {
-public:
-  explicit SnapshotImpl(SequenceNum seq) : snap_seq(seq) {}
-  ~SnapshotImpl() = default;
+  explicit Snapshot(SequenceNum seq) : snap_seq(seq) {}
+  ~Snapshot() = default;
   SequenceNum sequence() const { return snap_seq; }
 
 private:
