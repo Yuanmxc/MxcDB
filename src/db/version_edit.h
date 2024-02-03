@@ -9,7 +9,7 @@ namespace mxcdb {
 struct FileMate { // file mate
   FileMate() = default;
   ~FileMate() = default;
-  int re;
+  int allowed_seeks;
   bool seek; // if compaction is not
   uint64_t num;
   uint64_t file_size;
@@ -71,7 +71,6 @@ private:
   uint64_t log_number;
   uint64_t next_file_number;
   SequenceNum last_sequence;
-  bool has_comparator;
   bool has_log_number;
   bool has_next_file_number;
   bool has_last_sequence;

@@ -113,7 +113,7 @@ State WritableFile::Sync(int fd, const std::string &pt) {
   if (!p.ok()) {
     return p;
   }
-  if (::fdatasync(fd) == 0) {
+  if (::fsync(fd) == 0) {
     return State::Ok();
   }
   spdlog::error("error sync: filename: {} err: {}", pt.c_str(),
@@ -125,14 +125,14 @@ State WritableFile::SyncDirmainifset() {
   if (fd < 0) {
     spdlog::error("error open: filename: {} err: {}", dirstr.c_str(),
                   strerror(errno));
+    ::close(fd);
     return State::IoError("open error");
   } else {
-    ::close(fd);
-    if (::fdatasync(fd) == 0) {
+    if (::fsync(fd) == 0) {
       return State::Ok();
     }
-    spdlog::error("error sync: filename: {} err: {}", dirstr.c_str(),
-                  strerror(errno));
+    spdlog::error("error SyncDirmainifset: filename: {} err: {}",
+                  dirstr.c_str(), strerror(errno));
     return State::IoError("sync");
   }
   return State::Ok();
@@ -190,8 +190,8 @@ State PosixEnv::NewAppendableFile(const std::string &filename,
 }
 State PosixEnv::CreateDir(const std::string &dirname) {
   if (::mkdir(dirname.c_str(), 0755) != 0) {
-    spdlog::error("error createdir: dirname: {} err: {}", dirname,
-                  strerror(errno));
+    spdlog::warn("warn createdir: dirname: {} err: {}", dirname,
+                 strerror(errno));
     return State::IoError(dirname.c_str());
   }
   return State::Ok();
