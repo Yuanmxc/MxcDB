@@ -1,6 +1,5 @@
 #include "cache.h"
-namespace mxcdb {
-std::shared_ptr<kvpair> LruCache::Insert(kvpair &pair) {
+namespace mxcdb std::shared_ptr<kvpair> LruCache::Insert(kvpair &pair) {
   std::lock_guard<std::mutex> lk(mutex);
   std::shared_ptr<kvpair> hand = std::make_shared<kvpair>(pair);
   auto s = cacheMap.find(pair.first);

@@ -5,9 +5,9 @@
 
 #include "spdlog/spdlog.h"
 
-namespace mxcdb {
+namespace mxcdb
 
-class Filter {
+    class Filter {
 public:
   virtual ~Filter() = 0;
   virtual void CreateFiler(std::string_view &key,

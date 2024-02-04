@@ -10,7 +10,7 @@
 namespace mxcdb {
 class Memtable {
 public:
-  explicit Memtable() = default; // TODO
+  Memtable();
   ~Memtable() = default;
 
   Memtable(const Memtable &) = delete;
@@ -21,12 +21,12 @@ public:
   // Iterator* NewIterator(); //TODO?
   void Add(SequenceNum seq, Valuetype type, std::string_view key,
            std::string_view value);
-  bool Get(const Lookey &key, std::string_view *value, State *s);
+  bool Get(const Lookey &key, std::string *value, State *s);
 
 private:
-  std::unique_ptr<Skiplist> table;
   // std::unique_ptr<LruCache> cache;
-  std::unique_ptr<Arena> arena;
+  std::shared_ptr<Arena> arena;
+  std::unique_ptr<Skiplist> table;
   std::string tmp;
 };
 

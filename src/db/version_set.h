@@ -16,7 +16,7 @@ class VersionSet;
 class Version {
 public:
   struct Stats {
-    std::unique_ptr<FileMate> seek_file;
+    std::shared_ptr<FileMate> seek_file;
     int seek_file_level;
   };
   explicit Version(VersionSet *vset)
@@ -27,7 +27,7 @@ public:
 private:
   friend VersionSet;
   VersionSet *vset;
-  std::vector<std::unique_ptr<FileMate>>
+  std::vector<std::shared_ptr<FileMate>>
       files[kNumLevels]; // 每个级别的文件列表
   FileMate *filecompact;
   int filecompact_level;

@@ -4,6 +4,7 @@
 #include <string_view>
 
 #include "../util/common.h"
+#include "spdlog/spdlog.h"
 namespace mxcdb {
 
 class Memtable; //
@@ -17,7 +18,7 @@ public:
   void Put(std::string_view key, std::string_view value);
   void Delete(std::string_view key);
   void Clear();
-  void Append(WriteBatch &source);
+  void Append(WriteBatch *source);
   // State Iterate(Handler* handler) const;
   size_t mateSize() const { return mate.size(); }
   // 返回条目数
@@ -26,7 +27,6 @@ public:
   void SetCount(int n);
 
   SequenceNum Sequence() { return SequenceNum(DecodeFixed64(mate.data())); }
-
   void SetSequence(SequenceNum seq);
 
   std::string_view Contents() { return std::string_view(mate); }
@@ -34,10 +34,11 @@ public:
 
   void SetContents(const std::string_view &contents);
 
-  State InsertInto(Memtable *memtable);
+  State InsertInto(std::shared_ptr<Memtable> memtable);
 
 private:
   std::string mate;
+  SequenceNum seq;
 };
 } // namespace mxcdb
 #endif

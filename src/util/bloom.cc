@@ -5,7 +5,7 @@
 // #include <memory.h>
 // #include <string>
 
-// namespace mxcdb {
+// namespace mxcdb
 // static uint32_t BloomHash(std::string_view& key) {
 //   // return std::hash<char>()(key);
 // }
