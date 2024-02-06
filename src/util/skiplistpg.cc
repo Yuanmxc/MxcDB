@@ -1,8 +1,10 @@
 #include "skiplistpg.h"
 namespace mxcdb {
-void Skiplist::Insert(SkiplistKey key_) {
+void Skiplist::Insert(SkiplistKey skiplistkv) {
   node *p = (node *)arena->AllocAligned(sizeof(node));
-  p->key = key_;
+  skiplist_init_node(&p->snode);
+  p->key = skiplistkv.Key();
+  p->val = skiplistkv.Val();
   skiplist_insert(&table, &p->snode);
 }
 bool Skiplist::GreaterEqual(SkiplistKey &a, SkiplistKey &b) {
@@ -13,12 +15,11 @@ bool Skiplist::GreaterEqual(SkiplistKey &a, SkiplistKey &b) {
   }
   return true;
 }
-skiplist_node *Skiplist::Seek(const SkiplistKey &key) {
+skiplist_node *Skiplist::Seek(const InternalKey &key) {
   node p(key);
   skiplist_node *t = skiplist_find_greater_or_equal(&table, &p.snode);
   node *pp = _get_entry(t, node, snode);
-  int r =
-      ExtractUserKey(key.getview()).compare(ExtractUserKey(pp->key.getview()));
+  int r = key.ExtractUserKey().compare(pp->key.ExtractUserKey());
   if (r != 0) {
     t = nullptr;
   }
@@ -27,6 +28,6 @@ skiplist_node *Skiplist::Seek(const SkiplistKey &key) {
 skiplist_node *Skiplist::SeekToFirst() { return skiplist_begin(&table); }
 skiplist_node *Skiplist::SeekToLast() { return skiplist_end(&table); }
 bool Skiplist::KeyIsAfterNode(SkiplistKey &key, node *n) const {
-  return (n != nullptr) && (cmp(n->key.getview(), key.getview()) < 0);
+  return (n != nullptr) && (cmp(n->key, key.Key()) < 0);
 }
 } // namespace mxcdb

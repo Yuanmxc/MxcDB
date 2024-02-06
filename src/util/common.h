@@ -8,7 +8,7 @@
 namespace mxcdb {
 
 typedef uint64_t SequenceNum;
-
+typedef uint32_t uint32_t;
 // 定长 fix
 // 非定长 varint
 // 编码

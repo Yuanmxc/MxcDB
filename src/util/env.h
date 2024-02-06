@@ -19,7 +19,7 @@ const int kNumNonTableCacheFiles = 10;
 
 class PosixEnv;
 
-constexpr const size_t kWritableFileBufferSize = 64 * 1024;
+constexpr const uint32_t kWritableFileBufferSize = 64 * 1024;
 static std::string_view Basename(const std::string &filename);
 static bool Ismanifest(const std::string &filename);
 static std::string Dirname(const std::string &filename);
@@ -47,7 +47,7 @@ public:
   WritableFile &operator=(const WritableFile &) = delete;
 
   State Append(std::string_view ptr);
-  State Append(const char *ptr, size_t size);
+  State Append(const char *ptr, uint32_t size);
   std::string_view Name() { return std::string_view(filestr); }
   State Close();
   State Flush(); // flush是将我们自己的缓冲写入文件
@@ -57,7 +57,7 @@ public:
 
 private:
   char buf_[kWritableFileBufferSize];
-  size_t offset;
+  uint32_t offset;
   int fd;
   const std::string filestr;
   const std::string dirstr;
@@ -71,7 +71,7 @@ public:
   ReadFile &operator=(const ReadFile &) = delete;
   ~ReadFile() = default;
   std::string_view Name() { return std::string_view(str); }
-  State Read(size_t n, std::string_view result, char *scratch);
+  State Read(uint32_t n, std::string_view result, char *scratch);
   State Skip(uint64_t n);
 
 private:
