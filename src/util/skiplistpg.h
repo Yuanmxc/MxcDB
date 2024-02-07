@@ -2,6 +2,7 @@
 #define MXCDB_SKIPLISTPG_H_
 #include <functional>
 #include <memory.h>
+#include <memory>
 #include <string_view>
 
 #include "arena.h"
@@ -11,7 +12,10 @@ namespace mxcdb {
 struct node {
 public:
   node() = default;
-  node(const SkiplistKey &key_) : key(key_.Key()), val(key_.Val()) {}
+  node(const SkiplistKey &key_) {
+    key_.Key(key);
+    key_.Val(val);
+  }
   node(const InternalKey &key_) : key(key_) {}
   ~node() = default;
 
@@ -44,7 +48,10 @@ public:
   Skiplist &operator=(const Skiplist &) = delete;
   void Insert(SkiplistKey skiplistkv);
   bool Equal(SkiplistKey &a, SkiplistKey &b) const {
-    return (cmp(a.Key(), b.Key()) == 0);
+    InternalKey a1, b1;
+    a.Key(a1);
+    b.Key(b1);
+    return (cmp(a1, b1) == 0);
   }
   skiplist_node *Seek(const InternalKey &key);
   skiplist_node *SeekToFirst();
@@ -55,6 +62,7 @@ public:
 private:
   skiplist_raw table;
   std::shared_ptr<Arena> arena; // for new and delete
+  std::vector<std::unique_ptr<node>> nodes;
 };
 } // namespace mxcdb
 #endif

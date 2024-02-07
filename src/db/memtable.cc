@@ -23,10 +23,10 @@ void Memtable::Add(SequenceNum seq, Valuetype type, std::string_view key,
   p += 8;
   char *pt = EncodeVarint32(p, val_size);
   std::memcpy(pt, value.data(), val_size);
-  table->Insert(SkiplistKey(buf, encond_len));
+  table->Insert(SkiplistKey(buf));
 }
 bool Memtable::Get(const Lookey &key, std::string *value, State *s) {
-  InternalKey keys(key.internal_key().data());
+  InternalKey keys(key.internal_key());
   skiplist_node *t = table->Seek(keys);
   if (t != nullptr) {
     node *found = _get_entry(t, node, snode);

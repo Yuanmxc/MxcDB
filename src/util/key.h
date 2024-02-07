@@ -1,13 +1,15 @@
 #ifndef MXCDB_KEY_H_
 #define MXCDB_KEY_H_
+#include <string.h>
+
 #include <cstddef>
 #include <cstdint>
-#include <string.h>
+#include <map>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "common.h"
-#include "key.h"
 #include "skiplist.h"
 namespace mxcdb {
 typedef uint64_t SequenceNum;
@@ -34,6 +36,10 @@ public:
     PutFixed64(&Key, parser(num, type));
   }
   explicit InternalKey(std::string_view Key_) : Key(Key_.data()) {}
+  explicit InternalKey(std::pair<const char *, const char *> pairs) {
+    Key.resize(pairs.second - pairs.first);
+    memcpy(Key.data(), pairs.first, pairs.second - pairs.first);
+  }
   InternalKey(InternalKey &key_) { Key = key_.Key; }
   InternalKey(const InternalKey &key_) { Key = key_.Key; }
   InternalKey() {}
@@ -57,10 +63,12 @@ public:
   }
 
 private:
+  friend class SkiplistKey;
   std::string Key;
 };
 
-inline int cmp(const InternalKey &a_, const InternalKey &b_) { // inernalkey cmp
+inline int cmp(const InternalKey &a_,
+               const InternalKey &b_) { // inernalkey cmp
   std::string_view a = a_.getview();
   std::string_view b = b_.getview();
 
@@ -88,24 +96,28 @@ public:
 
   ~Lookey() = default;
   std::string_view Internalkey() const {
-    return std::string_view(start, end - start);
+    return std::string_view(kstart, end - kstart);
   }
 
   // Return an internal key (suitable for passing to an internal iterator)
-  std::string_view internal_key() const {
-    return std::string_view(start + sizeof(interlen),
-                            end - start - sizeof(interlen));
+  // std::string  const {
+  //   std::string ptr;
+  //   ptr.resize(end - kstart);
+  //   memcpy(ptr.data(), kstart, end - kstart);
+  //   return ptr;
+  // }
+  std::pair<const char *, const char *> internal_key() const {
+    std::pair<const char *, const char *> spt(kstart, end);
+    return spt;
   }
-  uint32_t getinterlen() const { return interlen; }
   // Return the user key
   std::string_view key() const {
-    return std::string_view(start + sizeof(interlen),
-                            end - start - sizeof(interlen) - 8);
+    return std::string_view(kstart, end - kstart - 8);
   }
 
 private:
-  const char *start; // all start
-  uint32_t interlen;
+  const char *start;  // all start
+  const char *kstart; // userkey start
   const char *end;
   char space[200];
 };
@@ -118,25 +130,31 @@ private:
 //    value    char[vlength]
 class SkiplistKey { // for skiplist
 public:
-  explicit SkiplistKey(const char *p, size_t len_) : str(p), len(len_) {}
+  explicit SkiplistKey(const char *p) : str(p) {}
   ~SkiplistKey() = default;
-  InternalKey Key() const {
+  // InternalKey&& Key() const {
+  //   uint32_t key_size;
+  //   getsize(str, key_size);
+  //   std::string p;
+  //   p.resize(VarintLength(key_size));
+  //   memcpy(p.data(),str + VarintLength(key_size), key_size);  //TODO '\0'
+  //   return std::move(InternalKey(p));
+  // }
+  void Key(InternalKey &p) const {
     uint32_t key_size;
     getsize(str, key_size);
-    std::string_view p(str + VarintLength(key_size), key_size); // TODO '\0'
-    return InternalKey(p);
+    p.Key.resize(key_size);
+    memcpy(p.Key.data(), str + VarintLength(key_size), key_size);
   }
-  std::string Val() const {
+  void Val(std::string &value) const {
     uint32_t key_size;
-    getsize(str, key_size);
     uint32_t val_size;
+    getsize(str, key_size);
     getsize(str + key_size + VarintLength(key_size), val_size);
-    std::string value;
     value.resize(val_size);
-    memcpy(value.data()) // TODO
-        (str + VarintLength(key_size) + key_size + VarintLength(val_size),
-         val_size); ////TODO '\0'
-    return value;
+    memcpy(value.data(),
+           str + VarintLength(key_size) + key_size + VarintLength(val_size),
+           val_size);
   }
   // void getInternalKey(std::string* key) const {
   //   uint32_t key_size;
@@ -160,7 +178,6 @@ public:
 
 private:
   const char *str;
-  size_t len;
 };
 } // namespace mxcdb
 #endif

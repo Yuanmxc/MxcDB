@@ -1,11 +1,15 @@
 #include "skiplistpg.h"
+#include <memory>
+
+#include "src/util/key.h"
 namespace mxcdb {
 void Skiplist::Insert(SkiplistKey skiplistkv) {
-  node *p = (node *)arena->AllocAligned(sizeof(node));
+  std::unique_ptr<node> p = std::make_unique<node>();
   skiplist_init_node(&p->snode);
-  p->key = skiplistkv.Key();
-  p->val = skiplistkv.Val();
+  skiplistkv.Key(p->key);
+  skiplistkv.Val(p->val);
   skiplist_insert(&table, &p->snode);
+  nodes.emplace_back(std::move(p));
 }
 bool Skiplist::GreaterEqual(SkiplistKey &a, SkiplistKey &b) {
   node p(a);
@@ -28,6 +32,8 @@ skiplist_node *Skiplist::Seek(const InternalKey &key) {
 skiplist_node *Skiplist::SeekToFirst() { return skiplist_begin(&table); }
 skiplist_node *Skiplist::SeekToLast() { return skiplist_end(&table); }
 bool Skiplist::KeyIsAfterNode(SkiplistKey &key, node *n) const {
-  return (n != nullptr) && (cmp(n->key, key.Key()) < 0);
+  InternalKey p;
+  key.Key(p);
+  return (n != nullptr) && (cmp(n->key, p) < 0);
 }
 } // namespace mxcdb

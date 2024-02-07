@@ -127,5 +127,7 @@ private:
   std::set<std::string> filelock;
   std::mutex filemutex; // lock filelock
 };
+State SetCurrentFile(PosixEnv *env, const std::string &dbname,
+                     uint64_t file_number);
 } // namespace mxcdb
 #endif

@@ -20,13 +20,11 @@ Lookey::Lookey(std::string_view key_,
     str = new char[needed];
   }
   start = str;
-  interlen = usize + 8;
-  // str = EncodeVarint32(str, usize + 8);
-  std::memcpy(str, (char *)(&interlen), sizeof(interlen));
-  str += sizeof(interlen);
-  std::memcpy(str, key_.data(), usize);
+  str = EncodeVarint32(str, usize + 8);
+  kstart = str;
+  memcpy(str, key_.data(), usize);
   str += usize;
-  EncodeFixed64(str, PackSequenceAndType(seq_, kValueTypeForSeek)); // 定长8字节
+  EncodeFixed64(str, PackSequenceAndType(seq_, kTypeValue));
   str += 8;
   end = str;
 }
