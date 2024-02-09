@@ -61,6 +61,7 @@ public:
     assert(Key.size() >= 8);
     return std::string_view(Key.data(), Key.size() - 8);
   }
+  size_t size() { return Key.size(); }
 
 private:
   friend class SkiplistKey;
@@ -152,9 +153,8 @@ public:
     getsize(str, key_size);
     getsize(str + key_size + VarintLength(key_size), val_size);
     value.resize(val_size);
-    memcpy(value.data(),
-           str + VarintLength(key_size) + key_size + VarintLength(val_size),
-           val_size);
+    memcpy(value.data(), str + VarintLength(key_size) + key_size,
+           val_size + VarintLength(val_size));
   }
   // void getInternalKey(std::string* key) const {
   //   uint32_t key_size;

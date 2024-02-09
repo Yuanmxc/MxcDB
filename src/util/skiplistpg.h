@@ -1,13 +1,13 @@
 #ifndef MXCDB_SKIPLISTPG_H_
 #define MXCDB_SKIPLISTPG_H_
+#include "arena.h"
+#include "key.h"
+#include "skiplist.h"
+#include <atomic>
 #include <functional>
 #include <memory.h>
 #include <memory>
 #include <string_view>
-
-#include "arena.h"
-#include "key.h"
-#include "skiplist.h"
 namespace mxcdb {
 struct node {
 public:
@@ -58,11 +58,13 @@ public:
   skiplist_node *SeekToLast();
   bool GreaterEqual(SkiplistKey &a, SkiplistKey &b);
   bool KeyIsAfterNode(SkiplistKey &key, node *n) const;
+  size_t Getsize() { return arena->MemoryUsage() + size; }
 
 private:
   skiplist_raw table;
   std::shared_ptr<Arena> arena; // for new and delete
   std::vector<std::unique_ptr<node>> nodes;
+  std::atomic<size_t> size;
 };
 } // namespace mxcdb
 #endif
