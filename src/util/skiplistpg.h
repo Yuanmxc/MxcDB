@@ -1,13 +1,16 @@
 #ifndef MXCDB_SKIPLISTPG_H_
 #define MXCDB_SKIPLISTPG_H_
+#include <memory.h>
+
+#include <atomic>
+#include <functional>
+#include <memory>
+#include <string_view>
+
+#include "../db/version_edit.h"
 #include "arena.h"
 #include "key.h"
 #include "skiplist.h"
-#include <atomic>
-#include <functional>
-#include <memory.h>
-#include <memory>
-#include <string_view>
 namespace mxcdb {
 struct node {
 public:
@@ -18,7 +21,6 @@ public:
   }
   node(const InternalKey &key_) : key(key_) {}
   ~node() = default;
-
   friend class Skiplist;
   friend int my_cmp(skiplist_node *a, skiplist_node *b, void *aux);
   // Metadata for skiplist node.
@@ -53,9 +55,25 @@ public:
     b.Key(b1);
     return (cmp(a1, b1) == 0);
   }
+  node *SeekToFirst() {
+    skiplist_node *t = skiplist_begin(&table);
+    return _get_entry(t, node, snode);
+  }
+  node *SeekToLast() {
+    skiplist_node *t = skiplist_end(&table);
+    return _get_entry(t, node, snode);
+  }
+  node *Next(node *ptr) {
+    skiplist_node *t = skiplist_next(&table, &ptr->snode);
+    return _get_entry(t, node, snode);
+  }
+  node *Prev(node *ptr) {
+    skiplist_node *t = skiplist_prev(&table, &ptr->snode);
+    return _get_entry(t, node, snode);
+  }
+  bool Valid(node *ptr) { return skiplist_is_valid_node(&ptr->snode); }
   skiplist_node *Seek(const InternalKey &key);
-  skiplist_node *SeekToFirst();
-  skiplist_node *SeekToLast();
+  State Flushlevel0(FileMate &meta);
   bool GreaterEqual(SkiplistKey &a, SkiplistKey &b);
   bool KeyIsAfterNode(SkiplistKey &key, node *n) const;
   size_t Getsize() { return arena->MemoryUsage() + size; }

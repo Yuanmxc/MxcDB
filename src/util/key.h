@@ -68,12 +68,28 @@ private:
   std::string Key;
 };
 
-inline int cmp(const InternalKey &a_,
-               const InternalKey &b_) { // inernalkey cmp
+static inline int cmp(const InternalKey &a_,
+                      const InternalKey &b_) { // inernalkey cmp
   std::string_view a = a_.getview();
   std::string_view b = b_.getview();
 
   int r = a_.ExtractUserKey().compare(b_.ExtractUserKey());
+  if (r == 0) {
+    const uint64_t anum = DecodeFixed64(a.data() + a.size() - 8);
+    const uint64_t bnum = DecodeFixed64(b.data() + b.size() - 8);
+    if (anum > bnum) {
+      r = -1;
+    } else if (anum < bnum) {
+      r = +1;
+    }
+  }
+  return r;
+}
+static inline int cmp(const std::string_view &a,
+                      const std::string_view &b) { // inernalkey cmp
+
+  int r = std::string_view(a.data(), a.size() - 8)
+              .compare(std::string_view(b.data(), b.size() - 8));
   if (r == 0) {
     const uint64_t anum = DecodeFixed64(a.data() + a.size() - 8);
     const uint64_t bnum = DecodeFixed64(b.data() + b.size() - 8);
