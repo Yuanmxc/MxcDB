@@ -4,8 +4,7 @@
 #include <map>
 #include <set>
 #include <string_view>
-namespace mxcdb {
-struct FileMate { // file mate
+namespace mxcdb struct FileMate { // file mate
   FileMate() = default;
   ~FileMate() = default;
   FileMate(FileMate &ptr)

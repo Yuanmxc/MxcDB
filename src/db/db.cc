@@ -2,17 +2,20 @@
 
 #include <memory.h>
 
+#include <atomic>
+#include <memory>
+#include <mutex>
+
+#include "../util/bloom.h"
 #include "../util/filename.h"
 #include "snapshot.h"
 #include "spdlog/spdlog.h"
+#include "src/db/filterblock.h"
 #include "src/db/memtable.h"
 #include "src/util/common.h"
 #include "src/util/env.h"
 #include "src/util/options.h"
 #include "version_edit.h"
-#include <atomic>
-#include <memory>
-#include <mutex>
 class Version;
 class VersionSet;
 
@@ -53,7 +56,11 @@ DBImpl::DBImpl(const Options *opt, const std::string &dbname)
       shutting_down_(false), mem_(nullptr), imm_(nullptr), has_imm_(false),
       logfile(nullptr), logfilenum(0), logwrite(nullptr),
       batch(std::make_shared<WriteBatch>()), background_compaction_(false),
-      versions_(std::make_unique<VersionSet>(dbname, opt, table_cache)) {}
+      versions_(std::make_unique<VersionSet>(dbname, opt, table_cache)) {
+  if (!bloomfit) {
+    bloomfit = std::make_unique<BloomFilter>(10);
+  }
+}
 DBImpl::~DBImpl() {
   std::unique_lock<std::mutex> lk(mutex);
   shutting_down_.store(true, std::memory_order_release);
