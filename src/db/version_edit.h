@@ -1,10 +1,12 @@
 #ifndef MXCDB_VERSION_EDIT_H_
 #define MXCDB_VERSION_EDIT_H_
 #include "../util/key.h"
+#include "src/db/block.h"
 #include <map>
 #include <set>
 #include <string_view>
-namespace mxcdb struct FileMate { // file mate
+namespace mxcdb {
+struct FileMate { // file mate
   FileMate() = default;
   ~FileMate() = default;
   FileMate(FileMate &ptr)
@@ -21,6 +23,8 @@ namespace mxcdb struct FileMate { // file mate
   uint64_t file_size;
   InternalKey smallest;
   InternalKey largest;
+  BlockHandle nextbeg; // next level 的开始 -> | 用于优化二分查找
+  BlockHandle nexend;  // next level 的结束 -> |
 };
 enum Tag {
   kLogNumber = 0,

@@ -1,26 +1,21 @@
-#include <algorithm>
+#include <functional>
 #include <iostream>
-#include <memory>
-#include <stdio.h>
-#include <string.h>
 #include <string>
-struct p {
-  p() = default;
-  ~p() = default;
-  int a;
-  std::string b;
-};
-int main() {
+#include <string_view>
 
-  std::string a, b;
-  a = "1234";
-  std::string c = std::move(a);
-  std::cout << c << std::endl;
+int main(int argc, char *argv[]) {
+  std::string_view p("12345");
+  if (p.starts_with("123")) {
+    printf("crazy\n");
+  }
+  size_t num;
+  std::string sp(p);
+  num = strtoull(p.data(), NULL, 0);
+  if (num == 12345) {
+    printf("sadsef");
+  }
+  if (p == "12345") {
+    printf("%d", num);
+  }
+  return 0;
 }
-// int main(){
-//   std::string* p;
-//   p=new std::string();
-//   p->resize(5);
-//   ::memcpy(p->data(),"1\0456",5);
-//   std::cout<<
-// }

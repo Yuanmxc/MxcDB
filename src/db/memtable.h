@@ -52,7 +52,8 @@ public:
   void WriteBlock(Blockbuilder *block, BlockHandle *handle);
   void WriteRawBlock(const std::string_view &block_contents,
                      CompressionType type, BlockHandle *handle);
-  int64_t Size() { return offset; }
+  uint64_t Size() { return offset; }
+  uint64_t Numentries() const { return num_entries; }
 
 private:
   Options options;
@@ -73,6 +74,7 @@ private:
   std::string compressed_output; // Data Block的block_data字段压缩后的结果
 };
 class Footer {
+public:
   Footer() = default;
   enum { kEncodedLength = 2 * BlockHandle::kMaxEncodedLength + 8 };
   const BlockHandle &metaindex_handle() const { return metaindex_handle_; }

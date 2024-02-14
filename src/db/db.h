@@ -113,7 +113,7 @@ private:
   bool background_compaction_;
   std::unique_ptr<VersionSet> versions_;
   State bg_error;
-  State stats_[kNumLevels];
+  // State stats_[kNumLevels];
   std::shared_ptr<PosixEnv> env;
 };
 } // namespace mxcdb
