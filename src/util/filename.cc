@@ -59,6 +59,9 @@ bool ParsefileName(const std::string &filename, uint64_t *number,
   if (pfile == "CURRENT") {
     *number = 0;
     *type = kCurrentFile;
+  } else if (pfile == "LOCK") {
+    *number = 0;
+    *type = kDBLockFile;
   } else if (pfile == "LOG" || pfile == "LOG.old") {
     *number = 0;
     *type = kInfoLogFile;
@@ -74,6 +77,7 @@ bool ParsefileName(const std::string &filename, uint64_t *number,
   } else {
     uint64_t num;
     std::string_view suffix = pfile;
+    num = strtoull(pfile.data(), NULL, 0);
     if (suffix == std::string_view(".log")) {
       *type = kLogFile;
     } else if (suffix == std::string_view(".sst") ||

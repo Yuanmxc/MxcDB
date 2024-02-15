@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "skiplist.h"
+#include "src/util/skiplistpg.h"
 struct my_node {
   // Metadata for skiplist node.
   skiplist_node snode;

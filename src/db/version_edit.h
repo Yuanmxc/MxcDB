@@ -1,7 +1,7 @@
 #ifndef MXCDB_VERSION_EDIT_H_
 #define MXCDB_VERSION_EDIT_H_
 #include "../util/key.h"
-#include "src/db/block.h"
+#include "block.h"
 #include <map>
 #include <set>
 #include <string_view>
@@ -52,6 +52,9 @@ public:
   void SetLastSequence(SequenceNum seq) {
     has_last_sequence = true;
     last_sequence = seq;
+  }
+  void SetCompactPointer(int level, const InternalKey &key) {
+    compact_pointers.emplace_back(std::make_pair(level, key));
   }
   // 在指定编号处添加指定文件。
   // “smallest”和“largest”是文件中最小和最大的键
