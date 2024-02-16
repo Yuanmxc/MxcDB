@@ -1,24 +1,20 @@
 #ifndef MXCDB_VERSION_EDIT_H_
 #define MXCDB_VERSION_EDIT_H_
-#include "../util/key.h"
-#include "block.h"
 #include <map>
 #include <set>
 #include <string_view>
-namespace mxcdb {
-struct FileMate { // file mate
+
+#include "../util/key.h"
+#include "src/db/block.h"
+namespace mxcdb struct FileMate { // file mate
   FileMate() = default;
   ~FileMate() = default;
   FileMate(FileMate &ptr)
-      : allowed_seeks(ptr.allowed_seeks), seek(ptr.seek), num(ptr.num),
-        file_size(ptr.file_size), smallest(ptr.smallest), largest(ptr.largest) {
-  }
+      : num(ptr.num), file_size(ptr.file_size), smallest(ptr.smallest),
+        largest(ptr.largest) {}
   FileMate(FileMate &&ptr)
-      : allowed_seeks(ptr.allowed_seeks), seek(ptr.seek), num(ptr.num),
-        file_size(ptr.file_size), smallest(ptr.smallest), largest(ptr.largest) {
-  }
-  int allowed_seeks;
-  bool seek; // if compaction is not
+      : num(ptr.num), file_size(ptr.file_size), smallest(ptr.smallest),
+        largest(ptr.largest) {}
   uint64_t num;
   uint64_t file_size;
   InternalKey smallest;

@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "common.h"
-#include "skiplistpg.h"
+#include "skiplist.h"
 namespace mxcdb {
 typedef uint64_t SequenceNum;
 enum Valuetype {
@@ -49,8 +49,9 @@ public:
     return *this;
   }
   ~InternalKey() = default;
+  void clear() { return Key.clear(); }
   const std::string_view getview() const { return std::string_view(Key); }
-  const std::string &getString() { return Key; }
+  const std::string getString() { return Key; }
   uint64_t parser(SequenceNum num, Valuetype type);
   bool DecodeFrom(std::string_view s) {
     Key.assign(s.data(), s.size());

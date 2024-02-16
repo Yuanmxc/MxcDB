@@ -10,7 +10,7 @@
 #include "../db/version_edit.h"
 #include "arena.h"
 #include "key.h"
-
+#include "skiplist.h"
 namespace mxcdb {
 struct node {
 public:

@@ -1,9 +1,9 @@
-#ifndef MXCDBLOCK_H_
-#define MXCDBLOCK_H_
+#ifndef MXCDB_BLOCK_H_
+#define MXCDB_BLOCK_H_
 #include <string_view>
 
 #include "../util/options.h"
-#include "../util/common.h"
+#include "src/util/common.h"
 namespace mxcdb {
 static const uint64_t kTableMagicNumber = 0xdb4775248b80fb57ull;
 // 1-byte type + 32-bit crc

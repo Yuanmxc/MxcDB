@@ -1,15 +1,16 @@
 #ifndef MXCDB_ENV_H_
 #define MXCDB_ENV_H_
+#include <fcntl.h>
+#include <unistd.h>
+
 #include <condition_variable>
 #include <cstdio>
-#include <fcntl.h>
 #include <functional>
 #include <mutex>
 #include <queue>
 #include <set>
 #include <string>
 #include <string_view>
-#include <unistd.h>
 
 #include "common.h"
 #include "filename.h"
@@ -77,6 +78,17 @@ public:
 private:
   std::string str;
   int fd;
+};
+// 随机读
+class RandomAccessFile {
+public:
+  RandomAccessFile() = default;
+
+  RandomAccessFile(const RandomAccessFile &) = delete;
+  RandomAccessFile &operator=(const RandomAccessFile &) = delete;
+  ~RandomAccessFile();
+  State Read(uint64_t offset, size_t n, std::string_view *result,
+             char *scratch);
 };
 class PosixEnv { // TODO static
 public:

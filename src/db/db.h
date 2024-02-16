@@ -72,6 +72,25 @@ private:
     State state;
     WriteBatch *batch;
   };
+  struct CompactionState {
+  public:
+    explicit CompactionState(Compaction *c)
+        : comp(c), small_snap(0), outfile(nullptr), builder(nullptr),
+          total_bytes(0) {}
+    struct Output {
+      uint64_t number;
+      uint64_t file_size;
+      InternalKey smallest, largest;
+    };
+    Output *current_output() { return &oupts[oupts.size() - 1]; }
+    Compaction *comp;
+    SequenceNum small_snap;
+    std::vector<Output> oupts;
+    std::shared_ptr<WritableFile> outfile;
+    Tablebuilder *builder;
+
+    uint64_t total_bytes;
+  };
   State NewDB();
   WriteBatch *BuildBatch(Writer **rul);
   WriteBatch *BuildBatchGroup(DBImpl::Writer **last_writer);
@@ -87,7 +106,7 @@ private:
   State WriteLevel0Table(std::shared_ptr<Memtable> &mem, VersionEdit &edit,
                          std::shared_ptr<Version> &base);
   State BuildTable(std::shared_ptr<Memtable> &mem, FileMate &meta);
-
+  State DoCompactionWork(std::unique_ptr<CompactionState> &compact);
   const std::string dbname;
   const Options *opts;
   std::unique_ptr<FileLock> db_lock;
