@@ -8,18 +8,18 @@
 #include "block.h"
 #include "crc32c/crc32c.h"
 
-namespace mxcdb
+namespace mxcdb {
 
-    enum RecordType {
-      // zero is reserved for preallocated files
-      kZeroType = 0,
+enum RecordType {
+  // zero is reserved for preallocated files
+  kZeroType = 0,
 
-      kFullType = 1,
+  kFullType = 1,
 
-      kFirstType = 2,
-      kMiddleType = 3,
-      kLastType = 4
-    };
+  kFirstType = 2,
+  kMiddleType = 3,
+  kLastType = 4
+};
 static const int kBlockSize = 32768;
 static const int kHeaderSize = 7;
 // checksum (4 bytes), length (2 bytes), type (1 byte).

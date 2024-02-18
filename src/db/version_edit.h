@@ -6,7 +6,8 @@
 
 #include "../util/key.h"
 #include "src/db/block.h"
-namespace mxcdb struct FileMate { // file mate
+namespace mxcdb {
+struct FileMate { // file mate
   FileMate() = default;
   ~FileMate() = default;
   FileMate(FileMate &ptr)
