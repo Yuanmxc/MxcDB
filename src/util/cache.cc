@@ -6,6 +6,8 @@
 #include "filename.h"
 namespace mxcdb {
 struct TableAndFile {
+public:
+  TableAndFile(TableAndFile &ptr) : file(ptr.file), table(ptr.table) {}
   std::shared_ptr<RandomAccessFile> file;
   std::shared_ptr<Table> table;
 };
@@ -49,10 +51,6 @@ CacheHandle *ShareCache::Insert(std::string_view &key,
 CacheHandle *ShareCache::Lookup(std::string_view &key) {
   int index = std::hash<std::string_view>{}(key) % 16;
   return sharecache[index]->Lookup(key);
-}
-uint64_t ShareCache::NewId() {
-  std::lock_guard<std::mutex> lk(mutex);
-  return ++last_id;
 }
 size_t ShareCache::Getsize() {
   size_t all = 0;
@@ -98,20 +96,26 @@ State TableCache::FindTable(
       std::shared_ptr<TableAndFile> tf = std::shared_ptr<TableAndFile>();
       tf->file = file;
       tf->table = table;
-
-      // 将tf插入到LRUCache中，占据一个大小的缓存，DeleteEntry是删除结点的回调函数
-      *handle = cache->Insert(key, static_cast<std::shared_ptr<void>>(tf));
+      *handle =
+          cache->Insert(key, static_pointer_cast<std::shared_ptr<void>>(tf));
     }
   }
   return s;
 }
 Iterator *TableCache::NewIterator(const ReadOptions &options,
                                   uint64_t file_number, uint64_t file_size,
-                                  Table **tableptr = nullptr) {
+                                  std::shared_ptr<Table> tableptr) {
+  tableptr = nullptr;
   CacheHandle *handle = nullptr;
   State s = FindTable(file_number, file_size, &handle);
   if (!s.ok()) {
     spdlog::error("dont find table Number{} {}", file_number, file_size);
   }
+  std::shared_ptr<Table> table =
+      (*std::static_pointer_cast<std::shared_ptr<TableAndFile>>(handle->str))
+          ->table;
+  auto rul = table->NewIterator(options);
+  tableptr = table;
+  return rul;
 }
 } // namespace mxcdb

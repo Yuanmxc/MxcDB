@@ -5,6 +5,7 @@
 #include <list>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "../util/cache.h"
@@ -17,6 +18,8 @@
 namespace mxcdb {
 class VersionSet;
 class Compaction;
+int FindFile(const std::vector<std::shared_ptr<FileMate>> &files,
+             std::string_view key);
 class Version {
 public:
   struct Stats {
@@ -40,6 +43,49 @@ private:
   // 用于size_compation
   double compaction_score;
   int compaction_level;
+};
+class LevelFileNumIterator : public Iterator {
+public:
+  LevelFileNumIterator(const std::vector<std::shared_ptr<FileMate>> *flist)
+      : flist_(flist), index_(flist->size()) {}
+  bool Valid() const override { return index_ < flist_->size(); }
+  void Seek(std::string_view target) override {
+    index_ = FindFile(*flist_, target);
+  }
+  void SeekToFirst() override { index_ = 0; }
+  void SeekToLast() override {
+    index_ = flist_->empty() ? 0 : flist_->size() - 1;
+  }
+  void Next() override {
+    assert(Valid());
+    index_++;
+  }
+  void Prev() override {
+    assert(Valid());
+    if (index_ == 0) {
+      index_ = flist_->size(); // Marks as invalid
+    } else {
+      index_--;
+    }
+  }
+  std::string_view key() const override {
+    assert(Valid());
+    return (*flist_)[index_]->largest.getview();
+  }
+  std::string_view value() const override {
+    assert(Valid());
+    EncodeFixed64(value_buf_, (*flist_)[index_]->num);
+    EncodeFixed64(value_buf_ + 8, (*flist_)[index_]->file_size);
+    return std::string_view(value_buf_, sizeof(value_buf_));
+  }
+  State state() const { return State::Ok(); }
+
+private:
+  const std::vector<std::shared_ptr<FileMate>> *const flist_;
+  uint32_t index_;
+
+  // Holds the file number and size.
+  mutable char value_buf_[16];
 };
 class VersionSet {
 public:
@@ -70,7 +116,7 @@ public:
                  const std::vector<std::shared_ptr<FileMate>> &inputs2,
                  InternalKey *smallest, InternalKey *largest);
   void SetupOtherInputs(std::unique_ptr<Compaction> &cop);
-  std::unique_ptr<Merageitor> MakeInputIterator(Compaction *c);
+  Iterator *MakeInputIterator(Compaction *c);
 
 private:
   class Builder;

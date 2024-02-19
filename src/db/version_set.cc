@@ -26,10 +26,25 @@ static double MaxBytesForLevel(const Options *options, int level) {
   }
   return result;
 }
-void Version::GetOverlappFiles(
-    int level, const InternalKey *begin, const InternalKey *end,
-    std::vector<std::shared_ptr<FileMate>>
-        *inputs) { // get small and large and push inputs
+int FindFile(const std::vector<std::shared_ptr<FileMate>> &files, // 二分找文件
+             std::string_view key) {
+  uint32_t left = 0;
+  uint32_t right = files.size();
+  while (left < right) {
+    uint32_t mid = (left + right) / 2;
+    std::shared_ptr<FileMate> f = files[mid];
+    if (cmp(f->largest.getview(), key) < 0) {
+      left = mid + 1;
+    } else {
+      right = mid;
+    }
+  }
+  return right;
+}
+void Version::GetOverlappFiles(int level, const InternalKey *begin,
+                               const InternalKey *end,
+                               std::vector<std::shared_ptr<FileMate>> *inputs) {
+  // get small and large and push inputs
   inputs->clear();
   InternalKey user_beg = *begin, user_end = *end;
   for (size_t i = 0; i < files[i].size(); i++) {
@@ -312,7 +327,7 @@ VersionSet::PickCompaction() { // choose compaction input file
   int level;
   if (size_compaction) {
     level = nowversion->compaction_level;
-    comp = std::unique_ptr<Compaction>(ops, level);
+    comp = std::make_unique<Compaction>(ops, level);
     for (int i = 0; i < nowversion->files[level].size(); i++) {
       if (compact_pointer[level].empty() ||
           cmp(compact_pointer[level],
@@ -412,7 +427,7 @@ void VersionSet::SetupOtherInputs(
     cop->edit_.SetCompactPointer(cop->level_, largest);
   }
 }
-std::unique_ptr<Merageitor> VersionSet::MakeInputIterator(Compaction *c) {
+Iterator *VersionSet::MakeInputIterator(Compaction *c) {
   ReadOptions options;
   const int space = (c->Level() == 0 ? c->inputs_[0].size() + 1 : 2);
   Iterator **list = new Iterator *[space];
@@ -426,10 +441,15 @@ std::unique_ptr<Merageitor> VersionSet::MakeInputIterator(Compaction *c) {
                                                  files[i]->file_size);
         }
       } else {
-        list[num++];
+        list[num++] =
+            NewTwoLevelIterator(new LevelFileNumIterator(&c->inputs_[i]),
+                                &GetFileIterator, table_cache, options);
       }
     }
   }
+  Iterator *result = NewMergingIterator(list, num);
+  delete[] list;
+  return result;
 }
 Compaction::Compaction(const Options *options, int level)
     : level_(level), max_output_file_size_(options->max_file_size),

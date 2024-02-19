@@ -1,5 +1,5 @@
-#ifndef MXCDB_MEMTABLE_H_
-#define MXCDB_MEMTABLE_H_
+#ifndef MXCDBEMTABLE_H_
+#define MXCDBEMTABLE_H_
 #include <memory.h>
 
 #include <memory>
