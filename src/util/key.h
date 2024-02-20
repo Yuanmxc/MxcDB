@@ -86,6 +86,30 @@ static inline int cmp(const InternalKey &a_,
   }
   return r;
 }
+struct ParsedInternalKey {
+public:
+  std::string_view user_key;
+  SequenceNum sequence;
+  Valuetype type;
+
+  ParsedInternalKey() {} // Intentionally left uninitialized (for speed)
+  ParsedInternalKey(std::string_view u, const SequenceNum &seq, Valuetype t)
+      : user_key(u), sequence(seq), type(t) {}
+  // std::string DebugString() const;
+};
+inline bool ParseInternalKey(std::string_view internal_key,
+                             ParsedInternalKey *result) {
+  const size_t n = internal_key.size();
+  if (n < 8)
+    return false;
+  uint64_t num = DecodeFixed64(internal_key.data() + n - 8);
+  uint8_t c = num & 0xff;
+  result->sequence = num >> 8;
+  result->type = static_cast<Valuetype>(c);
+  result->user_key = std::string_view(internal_key.data(), n - 8);
+  return (c <= static_cast<uint8_t>(kTypeValue));
+}
+
 // We construct a char array of the form:
 //    klength  varint32               <-- start_
 //    userkey  char[klength]          <-- kstart_

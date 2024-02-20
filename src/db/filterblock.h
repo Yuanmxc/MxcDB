@@ -1,5 +1,5 @@
-#ifndef MXCDB_FILTERBLOCK_H_
-#define MXCDB_FILTERBLOCK_H_
+#ifndef MXCDBILTERBLOCK_H_
+#define MXCDBILTERBLOCK_H_
 #include <memory.h>
 
 #include <memory>

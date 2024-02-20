@@ -427,10 +427,10 @@ void VersionSet::SetupOtherInputs(
     cop->edit_.SetCompactPointer(cop->level_, largest);
   }
 }
-Iterator *VersionSet::MakeInputIterator(Compaction *c) {
+std::shared_ptr<Iterator> VersionSet::MakeInputIterator(Compaction *c) {
   ReadOptions options;
   const int space = (c->Level() == 0 ? c->inputs_[0].size() + 1 : 2);
-  Iterator **list = new Iterator *[space];
+  std::shared_ptr<Iterator> *list = new std::shared_ptr<Iterator>[space];
   int num = 0;
   for (int i = 0; i < 2; i++) {
     if (c->inputs_[i].empty()) {
@@ -441,13 +441,14 @@ Iterator *VersionSet::MakeInputIterator(Compaction *c) {
                                                  files[i]->file_size);
         }
       } else {
-        list[num++] =
-            NewTwoLevelIterator(new LevelFileNumIterator(&c->inputs_[i]),
-                                &GetFileIterator, table_cache, options);
+        list[num++] = NewTwoLevelIterator(
+            std::static_pointer_cast<Iterator>(
+                std::make_shared<LevelFileNumIterator>(&c->inputs_[i])),
+            &GetFileIterator, table_cache, options);
       }
     }
   }
-  Iterator *result = NewMergingIterator(list, num);
+  std::shared_ptr<Iterator> result = NewMergingIterator(list, num);
   delete[] list;
   return result;
 }
@@ -463,5 +464,41 @@ bool Compaction::IsTrivialMove() {
   return (inputs_[0].size() == 1 && inputs_[1].size() == 0 &&
           TotalFileSize(grandparents_) <=
               input_version_->vset->ops->max_file_size * 10);
+}
+bool Compaction::IsBaseLevelForKey(std::string_view user_key) {
+  for (int lvl = level_ + 2; lvl < config::kNumLevels; lvl++) {
+    const std::vector<std::shared_ptr<FileMate>> &files =
+        input_version_->files[lvl];
+    while (level_ptrs[lvl] < files.size()) {
+      std::shared_ptr<FileMate> f = files[level_ptrs[lvl]];
+      if (cmp(user_key, f->largest.getview()) <= 0) {
+        if (cmp(user_key, f->smallest.getview()) >= 0) {
+          return false;
+        }
+        break;
+      }
+      level_ptrs[lvl]++;
+    }
+  }
+  return true;
+}
+bool Compaction::ShouldStopBefore(std::string_view internal_key) {
+  VersionSet *vset_ = input_version_->vset;
+  while (grand_index < grandparents_.size() &&
+         cmp(internal_key, grandparents_[grand_index]->largest.getview()) > 0) {
+    if (seen_key) {
+      overlapbytes += grandparents_[grand_index]->file_size;
+    }
+    grand_index++;
+  }
+  seen_key = true;
+
+  if (overlapbytes > MaxGrandParentOverlapBytes(vset_->ops)) {
+    // 当前输出文件已经与level+2层文件有太多重合，新建一个输出文件
+    overlapbytes = 0;
+    return true;
+  } else {
+    return false;
+  }
 }
 } // namespace mxcdb

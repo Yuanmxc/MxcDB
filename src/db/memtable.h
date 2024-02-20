@@ -1,12 +1,11 @@
-#ifndef MXCDBEMTABLE_H_
-#define MXCDBEMTABLE_H_
+#ifndef MXCDB_MEMTABLE_H_
+#define MXCDB_MEMTABLE_H_
 #include <memory.h>
 
 #include <memory>
 #include <string_view>
 
 #include "../util/arena.h"
-#include "../util/cache.h"
 #include "../util/key.h"
 #include "../util/skiplistpg.h"
 #include "block.h"
@@ -24,7 +23,6 @@ public:
   void FindShortestSeparator(std::string *start, std::string_view limit);
   void FindShortSuccessor(std::string *key);
   uint32_t ApproximateMemoryUsage();
-  // Iterator* NewIterator(); //TODO?
   void Add(SequenceNum seq, Valuetype type, std::string_view key,
            std::string_view value);
   bool Get(const Lookey &key, std::string *value, State *s);
@@ -46,7 +44,7 @@ public:
         pending_index_entry(false) {
     indexoptions.block_restart_interval = 1;
   }
-  void Add(const InternalKey &key, const std::string &val);
+  void Add(const std::string_view &key, const std::string_view &val);
   void Flush();
   State Finish();
   void WriteBlock(Blockbuilder *block, BlockHandle *handle);

@@ -11,6 +11,14 @@ public:
   std::shared_ptr<RandomAccessFile> file;
   std::shared_ptr<Table> table;
 };
+void LruCache::Erase(std::string_view ekey) {
+  std::lock_guard<std::mutex> lk(mutex);
+  auto s = cacheMap.find(ekey);
+  if (s != cacheMap.end()) {
+    cacheList.erase(s->second);
+    cacheMap.erase(s);
+  }
+}
 CacheHandle *LruCache::Insert(kvpair &pair) {
   std::lock_guard<std::mutex> lk(mutex);
   std::shared_ptr<kvpair> hand = std::make_shared<kvpair>(pair);
@@ -52,6 +60,10 @@ CacheHandle *ShareCache::Lookup(std::string_view &key) {
   int index = std::hash<std::string_view>{}(key) % 16;
   return sharecache[index]->Lookup(key);
 }
+void ShareCache::Erase(std::string_view ekey) {
+  int index = std::hash<std::string_view>{}(ekey) % 16;
+  sharecache[index]->Erase(ekey);
+}
 size_t ShareCache::Getsize() {
   size_t all = 0;
   for (int i = 0; i < 16; i++) {
@@ -66,8 +78,22 @@ TableCache::TableCache(std::string_view dbname, const Options *opt)
 State TableCache::Get(const ReadOptions &readopt, uint64_t file_num,
                       uint64_t file_size, std::string_view key, void *arg,
                       void (*handle_rul)(void *, std::string_view a,
-                                         std::string_view b)) {}
-void TableCache::Evict(uint64_t file_number) {} // TODO
+                                         std::string_view b)) {
+  CacheHandle *handle = nullptr;
+  State s = FindTable(file_num, file_size, &handle);
+  if (s.ok()) {
+    std::shared_ptr<Table> t =
+        (*std::static_pointer_cast<std::shared_ptr<TableAndFile>>(handle->str))
+            ->table;
+    s = t->InternalGet(readopt, key, arg, handle_rul);
+  }
+  return s;
+}
+void TableCache::Evict(uint64_t file_number) {
+  char buf[sizeof(file_number)];
+  EncodeFixed64(buf, file_number);
+  cache->Erase(std::string_view(buf, sizeof(buf)));
+}
 State TableCache::FindTable(
     uint64_t file_num,
     uint64_t file_size, // 将ldb或sst文件映射为Table类,实现文件的操作
@@ -102,9 +128,9 @@ State TableCache::FindTable(
   }
   return s;
 }
-Iterator *TableCache::NewIterator(const ReadOptions &options,
-                                  uint64_t file_number, uint64_t file_size,
-                                  std::shared_ptr<Table> tableptr) {
+std::shared_ptr<Iterator>
+TableCache::NewIterator(const ReadOptions &options, uint64_t file_number,
+                        uint64_t file_size, std::shared_ptr<Table> tableptr) {
   tableptr = nullptr;
   CacheHandle *handle = nullptr;
   State s = FindTable(file_number, file_size, &handle);
@@ -114,7 +140,7 @@ Iterator *TableCache::NewIterator(const ReadOptions &options,
   std::shared_ptr<Table> table =
       (*std::static_pointer_cast<std::shared_ptr<TableAndFile>>(handle->str))
           ->table;
-  auto rul = table->NewIterator(options);
+  std::shared_ptr<Iterator> rul = table->NewIterator(options);
   tableptr = table;
   return rul;
 }

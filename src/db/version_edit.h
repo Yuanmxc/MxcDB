@@ -10,7 +10,7 @@ namespace mxcdb {
 struct FileMate { // file mate
   FileMate() = default;
   ~FileMate() = default;
-  FileMate(FileMate &ptr)
+  FileMate(const FileMate &ptr)
       : num(ptr.num), file_size(ptr.file_size), smallest(ptr.smallest),
         largest(ptr.largest) {}
   FileMate(FileMate &&ptr)

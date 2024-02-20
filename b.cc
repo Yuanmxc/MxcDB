@@ -1,16 +1,13 @@
+#include <cstddef>
 #include <functional>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <string_view>
-void func(std::string_view *p) {
-  char buf[6] = "fsefe";
-  *p = std::string_view(buf, 6);
-  return;
-}
-int main(int argc, char *argv[]) {
-  std::string_view p;
-  func(&p);
-  std::cout << p << std::endl;
-  return 0;
+
+#include "stdio.h"
+int main() {
+  std::shared_ptr<int> p = std::static_pointer_cast<std::shared_ptr<int>>(
+      std::make_shared<uint64_t>(14));
+  return
 }

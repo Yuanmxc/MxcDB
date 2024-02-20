@@ -6,6 +6,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <deque>
+#include <memory>
 #include <mutex>
 #include <set>
 #include <string>
@@ -107,6 +108,10 @@ private:
                          std::shared_ptr<Version> &base);
   State BuildTable(std::shared_ptr<Memtable> &mem, FileMate &meta);
   State DoCompactionWork(std::unique_ptr<CompactionState> &compact);
+  State FinishCompactionOutputFile(CompactionState *compact,
+                                   std::shared_ptr<Iterator> &input);
+  State OpenCompactionOutputFile(CompactionState *compact);
+  State InstallCompactionResults(CompactionState *compact);
   const std::string dbname;
   const Options *opts;
   std::unique_ptr<FileLock> db_lock;
