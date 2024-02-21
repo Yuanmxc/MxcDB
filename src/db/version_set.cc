@@ -41,24 +41,117 @@ int FindFile(const std::vector<std::shared_ptr<FileMate>> &files, // 二分找�
   }
   return right;
 }
+static bool NewestFirst(std::shared_ptr<FileMate> &a,
+                        std::shared_ptr<FileMate> &b) {
+  return a->num > b->num;
+}
+State Version::Get(const ReadOptions &op, const Lookey &key, std::string *val,
+                   GetStats *stats) {
+  std::string_view ikey = key.inter_key();
+  std::string_view user_key = key.key();
+  State s;
+  stats->seek_file = nullptr;
+  stats->seek_file_level = -1;
+  std::shared_ptr<FileMate> last_file_read = nullptr;
+  int last_file_read_level = -1;
+  std::vector<std::shared_ptr<FileMate>> tmp;
+  std::shared_ptr<FileMate> tmp2;
+  for (int level = 0; level < config::kNumLevels; level++) {
+    size_t num_files = files[level].size();
+    if (num_files == 0)
+      continue;
+    std::shared_ptr<FileMate> const *files_ = &files[level][0];
+    if (level == 0) { // 按照顺序迭代
+      tmp.reserve(num_files);
+      for (uint32_t i = 0; i < num_files; i++) {
+        std::shared_ptr<FileMate> f = files_[i];
+        if (cmp(user_key, f->smallest.getusrkeyview()) >= 0 &&
+            cmp(user_key, f->largest.getusrkeyview()) <= 0) {
+          tmp.push_back(f);
+        }
+      }
+      if (tmp.empty())
+        continue;
+      std::sort(tmp.begin(), tmp.end(), NewestFirst);
+      files_ = &tmp[0];
+      num_files = tmp.size();
+    } else {
+      uint32_t index = FindFile(files[level], ikey);
+      if (index >= num_files) {
+        files_ = nullptr;
+        num_files = 0;
+      } else {
+        tmp2 = files_[index];
+        if (cmp(user_key, tmp2->smallest.getusrkeyview()) < 0) {
+          files_ = nullptr;
+          num_files = 0;
+        } else {
+          files_ = &tmp2;
+          num_files = 1;
+        }
+      }
+    }
+    for (uint32_t i = 0; i < num_files; i++) {
+      if (last_file_read != nullptr && stats == nullptr) {
+        stats->seek_file = last_file_read;
+        stats->seek_file_level = last_file_read_level;
+
+        std::shared_ptr<FileMate> f = files_[i];
+        last_file_read = f;
+        last_file_read_level = level;
+
+        Saver saver;
+        saver.state = kNotFound;
+        saver.user_key = user_key;
+        saver.value = val;
+        s = vset->table_cache->Get(op, f->num, f->file_size, ikey, &saver,
+                                   SaveValue); // 回调保存save里
+        if (!s.ok()) {
+          return s;
+        }
+        switch (saver.state) {
+        case kNotFound:
+          break; // Keep searching in other files
+        case kFound:
+          return s;
+        case kDeleted:
+          s = State::Notfound();
+          return s;
+        case kCorrupt:
+          s = State::Corruption();
+          spdlog::error("corrupted key for ", user_key);
+          return s;
+        }
+      }
+    }
+  }
+}
 void Version::GetOverlappFiles(int level, const InternalKey *begin,
                                const InternalKey *end,
                                std::vector<std::shared_ptr<FileMate>> *inputs) {
   // get small and large and push inputs
   inputs->clear();
-  InternalKey user_beg = *begin, user_end = *end;
+  std::string_view user_begin, user_end;
+  if (begin != nullptr) {
+    user_begin = begin->getusrkeyview();
+  }
+  if (end != nullptr) {
+    user_end = end->getusrkeyview();
+  }
   for (size_t i = 0; i < files[i].size(); i++) {
     std::shared_ptr<FileMate> p = files[0][i];
-    if (begin != nullptr && cmp(user_beg, p->largest) > 0) {
-    } else if (end != nullptr && cmp(*end, p->smallest) < 0) {
+    if (begin != nullptr && cmp(user_begin, p->largest.getusrkeyview()) > 0) {
+    } else if (end != nullptr &&
+               cmp(user_end, p->smallest.getusrkeyview()) < 0) {
     } else {
       inputs->push_back(p);
-      if (begin != nullptr && cmp(user_end, p->smallest) < 0) {
-        user_beg = p->smallest;
+      if (begin != nullptr && cmp(user_end, p->smallest.getusrkeyview()) < 0) {
+        user_begin = p->smallest.getusrkeyview();
         inputs->clear();
         i = 0;
-      } else if (end != nullptr && cmp(p->largest, user_end) > 0) {
-        user_end = p->largest;
+      } else if (end != nullptr &&
+                 cmp(p->largest.getusrkeyview(), user_end) > 0) {
+        user_end = p->largest.getusrkeyview();
         inputs->clear();
         i = 0;
       }
@@ -471,8 +564,8 @@ bool Compaction::IsBaseLevelForKey(std::string_view user_key) {
         input_version_->files[lvl];
     while (level_ptrs[lvl] < files.size()) {
       std::shared_ptr<FileMate> f = files[level_ptrs[lvl]];
-      if (cmp(user_key, f->largest.getview()) <= 0) {
-        if (cmp(user_key, f->smallest.getview()) >= 0) {
+      if (cmp(user_key, f->largest.getusrkeyview()) <= 0) {
+        if (cmp(user_key, f->smallest.getusrkeyview()) >= 0) {
           return false;
         }
         break;

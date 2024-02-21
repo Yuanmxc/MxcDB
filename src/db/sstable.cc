@@ -5,6 +5,7 @@
 #include <memory>
 #include <string_view>
 
+#include "../util/cache.h"
 #include "src/db/block.h"
 #include "src/db/memtable.h"
 #include "src/util/options.h"
@@ -82,6 +83,31 @@ void Table::ReadFilter(std::string_view filter_handle_value) {
   pl->filter_data = block.data(); // Will need to delete later
 
   pl->filter = std::make_shared<FilterBlockReader>(block);
+}
+std::shared_ptr<Iterator> Table::BlockReader(void *args, const ReadOptions &opt,
+                                             std::string_view index_value) {
+  Table *table = reinterpret_cast<Table *>(args);
+  LruCache *block_cache = nullptr;
+  std::shared_ptr<Block> block = nullptr;
+  CacheHandle *cache_handle = nullptr;
+
+  BlockHandle handle;
+  std::string_view input = index_value;
+  State s = handle.DecodeFrom(&input);
+  if (s.ok()) {
+    std::string_view contents;
+    s = ReadBlock(table->pl->file.get(), opt, handle, &contents);
+    if (s.ok()) {
+      block = std::make_shared<Block>(contents);
+    }
+  }
+  std::shared_ptr<Iterator> iter;
+  if (block != nullptr) {
+    iter = block->NewIterator();
+  } else {
+    spdlog::error("new iterator blockreader error");
+  }
+  return iter;
 }
 State Table::InternalGet(const ReadOptions &options, std::string_view k,
                          void *arg,

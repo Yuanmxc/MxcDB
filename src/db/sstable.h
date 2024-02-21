@@ -35,8 +35,8 @@ public:
 private:
   friend class TableCache;
 
-  static std::shared_ptr<Iterator> BlockReader(void *, const ReadOptions &,
-                                               std::string_view);
+  static std::shared_ptr<Iterator>
+  BlockReader(void *args, const ReadOptions &opt, std::string_view index_value);
 
   explicit Table(std::unique_ptr<Tablestpl> &pl_) { pl.reset(pl_.release()); }
 
