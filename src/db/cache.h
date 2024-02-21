@@ -9,10 +9,10 @@
 #include <string_view>
 #include <unordered_map>
 
-#include "../db/sstable.h"
-#include "env.h"
+#include "../util/env.h"
+#include "../util/options.h"
 #include "iterator.h"
-#include "options.h"
+#include "sstable.h"
 namespace mxcdb {
 struct CacheHandle {
   std::shared_ptr<void> str;
@@ -53,7 +53,7 @@ public:
   //   return reinterpret_cast<CacheHandle*>(handle)->;
   // }
   uint64_t NewId() {
-    std::unique_lock<ShareCache>(mutex);
+    std::unique_lock<std::mutex>(mutex);
     return ++(last_id);
   }
   size_t Getsize();

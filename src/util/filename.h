@@ -5,6 +5,7 @@
 #include <string>
 
 #include "common.h"
+
 namespace mxcdb {
 class PosixEnv;
 enum FileType {

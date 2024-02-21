@@ -2,11 +2,11 @@
 
 #include <memory.h>
 
+#include "common.h"
 #include <cstdint>
 #include <functional>
 #include <string>
 #include <string_view>
-
 namespace mxcdb {
 static uint32_t BloomHash(const std::string_view &key) {
   std::hash<std::string_view> h;
@@ -59,12 +59,12 @@ bool BloomFilter::KeyMayMatch(const std::string_view &key,
   for (size_t j = 0; j < hash_size; j++) {
     const uint32_t bitpos = h % bits;
     if ((array[bitpos / 8] & (1 << (bitpos % 8))) == 0) {
-      spdlog::info("Bloom isnot exest");
+      log->info("Bloom isnot exest {}", key);
       return false;
     }
     h += delta;
   }
-  spdlog::info("Bloom exest");
+  log->info("Bloom exest {}", key);
   return true;
 }
 

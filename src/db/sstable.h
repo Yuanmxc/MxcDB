@@ -4,10 +4,10 @@
 #include <string_view>
 
 #include "../util/common.h"
-#include "../util/iterator.h"
 #include "../util/options.h"
 #include "block.h"
 #include "filterblock.h"
+#include "iterator.h"
 #include "src/db/memtable.h"
 namespace mxcdb {
 struct Tablestpl {
@@ -29,14 +29,14 @@ public:
                     std::shared_ptr<Table> &table);
   Table(const Table &) = delete;
   Table &operator=(const Table &) = delete;
-  std::shared_ptr<Iterator> NewIterator(const ReadOptions &);
+  std::shared_ptr<Iterator> NewIterator(const ReadOptions &opt);
   ~Table();
 
 private:
   friend class TableCache;
 
-  static std::shared_ptr<Iterator>
-  BlockReader(void *args, const ReadOptions &opt, std::string_view index_value);
+  static std::shared_ptr<Iterator> BlockReader(void *, const ReadOptions &,
+                                               std::string_view);
 
   explicit Table(std::unique_ptr<Tablestpl> &pl_) { pl.reset(pl_.release()); }
 

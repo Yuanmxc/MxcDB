@@ -119,7 +119,7 @@ State Version::Get(const ReadOptions &op, const Lookey &key, std::string *val,
           return s;
         case kCorrupt:
           s = State::Corruption();
-          spdlog::error("corrupted key for ", user_key);
+          log->error("corrupted key for ", user_key);
           return s;
         }
       }
@@ -264,7 +264,7 @@ public:
       }
 
       // Make sure there is no overlap in levels > 0
-      if (level > 0) { // TODO level and teir
+      if (level > 0) {
         for (uint32_t i = 1; i < v->files[level].size(); i++) {
           InternalKey &prev_end = v->files[level][i - 1]->largest;
           InternalKey &this_begin = v->files[level][i]->smallest;
@@ -497,7 +497,7 @@ void VersionSet::SetupOtherInputs(
       nowversion->GetOverlappFiles(cop->level_ + 1, &new_start, &new_limit,
                                    &expanded1);
       if (expanded1.size() == cop->inputs_[1].size()) {
-        spdlog::info(
+        log->info(
             "Expanding@LEVEL{} FileNum: {} + {} ({} + {} bytes) to Expend "
             "FileNum {} + {} ({} + {} bytes)",
             cop->level_, int(cop->inputs_[0].size()),
@@ -537,7 +537,7 @@ std::shared_ptr<Iterator> VersionSet::MakeInputIterator(Compaction *c) {
         list[num++] = NewTwoLevelIterator(
             std::static_pointer_cast<Iterator>(
                 std::make_shared<LevelFileNumIterator>(&c->inputs_[i])),
-            &GetFileIterator, table_cache, options);
+            &GetFileIterator, table_cache.get(), options);
       }
     }
   }
