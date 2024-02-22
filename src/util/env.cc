@@ -7,10 +7,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "filename.h"
+#include <memory>
 #include <thread>
+
+#include "filename.h"
 namespace mxcdb {
-void Logv(const char *format, va_list ap) {}
+extern std::shared_ptr<spdlog::logger> log;
 State WritableFile::Append(std::string_view ptr) {
   return Append(ptr.data(), ptr.size());
 }
@@ -145,8 +147,8 @@ State PosixEnv::NewReadFile(const std::string &filename,
   result = std::make_unique<ReadFile>(filename, fd);
   return State::Ok();
 }
-State NewRandomAccessFile(const std::string &filename,
-                          std::shared_ptr<RandomAccessFile> &result) {
+State PosixEnv::NewRandomAccessFile(const std::string &filename,
+                                    std::shared_ptr<RandomAccessFile> &result) {
   int fd = ::open(filename.c_str(), O_RDONLY | O_CLOEXEC);
   if (fd < 0) {
     result = nullptr;
@@ -194,7 +196,8 @@ State PosixEnv::NewAppendableFile(const std::string &filename,
 }
 State PosixEnv::CreateDir(const std::string &dirname) {
   if (::mkdir(dirname.c_str(), 0755) != 0) {
-    log->warn("warn createdir: dirname: {} err: {}", dirname, strerror(errno));
+    mxcdb::log->warn("warn createdir: dirname: {} err: {}", dirname,
+                     strerror(errno));
     return State::IoError();
   }
   return State::Ok();
@@ -204,8 +207,8 @@ State PosixEnv::GetChildren(const std::string &directory_path,
   result->clear();
   ::DIR *dir = ::opendir(directory_path.c_str());
   if (dir == nullptr) {
-    log->error("error opendir: dirname: {} err: {}", directory_path,
-               strerror(errno));
+    mxcdb::log->error("error opendir: dirname: {} err: {}", directory_path,
+                      strerror(errno));
     return State::IoError();
   }
   struct ::dirent *entry;
@@ -241,7 +244,8 @@ State PosixEnv::LockFile(const std::string &filename,
                          std::unique_ptr<FileLock> &lock) {
   int fd = ::open(filename.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, 0644);
   if (fd < 0) {
-    log->error("error open : filename: {} err: {}", filename, strerror(errno));
+    // log->error("error open : filename: {} err: {}", filename,
+    //               strerror(errno));
     return State::IoError();
   }
   {

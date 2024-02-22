@@ -8,7 +8,8 @@ SET(CMAKE_C_FLAGS ${CMAKE_CXX_FLAGS} -g -fno-strict-aliasing -O2 -Wall -Wextra -
 -D_GNU_SOURCE -D_REENTRANT -fPIC -Wno-deprecated -m64 -Wnonnull -Wstringop-overflow -Wuninitialized -Wunused)
 
 aux_source_directory(src/db MXCDB_DB)
-aux_source_directory(src/uyil MXCDB_UTIL)
+aux_source_directory(src/util MXCDB_UTIL)
+aux_source_directory(test MXCDB_TEST)
 #搜索目录下所有的cpp文件
 
 add_executable(MxcDB

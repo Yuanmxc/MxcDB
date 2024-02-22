@@ -123,8 +123,7 @@ State TableCache::FindTable(
       std::shared_ptr<TableAndFile> tf = std::shared_ptr<TableAndFile>();
       tf->file = file;
       tf->table = table;
-      *handle =
-          cache->Insert(key, static_pointer_cast<std::shared_ptr<void>>(tf));
+      *handle = cache->Insert(key, static_pointer_cast<void>(tf));
     }
   }
   return s;

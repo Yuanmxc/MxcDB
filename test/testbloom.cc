@@ -1,5 +1,4 @@
 #include "src/util/bloom.h"
-#include "src/util/options.h"
 #include "gtest/gtest.h"
 #include <string>
 #include <string_view>

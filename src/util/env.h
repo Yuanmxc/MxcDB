@@ -3,6 +3,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "common.h"
+#include "filename.h"
 #include <condition_variable>
 #include <cstdio>
 #include <functional>
@@ -12,10 +14,6 @@
 #include <set>
 #include <string>
 #include <string_view>
-
-#include "common.h"
-#include "filename.h"
-
 namespace mxcdb {
 const int kNumNonTableCacheFiles = 10;
 
@@ -156,8 +154,6 @@ public:
   void Schedule(backwork work);
   void StartThread(void (*thread_main)(void *thread_main_arg),
                    void *thread_main_arg);
-  // State NewLogger(const std::string& filename, std::unique_ptr<Logger>
-  // result);
   bool FileExists(const std::string &filename) {
     return ::access(filename.c_str(), F_OK) == 0;
   }
