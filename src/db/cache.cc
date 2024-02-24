@@ -135,7 +135,7 @@ TableCache::NewIterator(const ReadOptions &options, uint64_t file_number,
   CacheHandle *handle = nullptr;
   State s = FindTable(file_number, file_size, &handle);
   if (!s.ok()) {
-    log->error("dont find table Number{} {}", file_number, file_size);
+    mlog->error("dont find table Number{} {}", file_number, file_size);
   }
   std::shared_ptr<Table> table =
       (*std::static_pointer_cast<std::shared_ptr<TableAndFile>>(handle->str))

@@ -13,8 +13,7 @@ Lookey::Lookey(std::string_view key_,
   size_t usize = key_.size();
   size_t needed = usize + 13;
   char *str;
-
-  if (needed <= sizeof(key_)) {
+  if (needed <= sizeof(space)) {
     str = space;
   } else {
     str = new char[needed];

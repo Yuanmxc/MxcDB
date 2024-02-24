@@ -3,8 +3,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "common.h"
-#include "filename.h"
 #include <condition_variable>
 #include <cstdio>
 #include <functional>
@@ -14,6 +12,9 @@
 #include <set>
 #include <string>
 #include <string_view>
+
+#include "common.h"
+#include "filename.h"
 namespace mxcdb {
 const int kNumNonTableCacheFiles = 10;
 
@@ -97,8 +98,8 @@ public:
     int fd = fd_;
     fd = ::open(filename_.c_str(), O_RDONLY | O_CLOEXEC);
     if (fd < 0) {
-      log->error("error open: filename: {} err: {}", filename_.c_str(),
-                 strerror(errno));
+      spdlog::error("error open: filename: {} err: {}", filename_.c_str(),
+                    strerror(errno));
       return State::IoError();
     }
 
@@ -109,8 +110,8 @@ public:
     ssize_t read_size = ::pread(fd, scratch, n, static_cast<off_t>(offset));
     *result = std::string_view(scratch, (read_size < 0) ? 0 : read_size);
     if (read_size < 0) {
-      log->error("error read: filename: {} err: {}", filename_.c_str(),
-                 strerror(errno));
+      spdlog::error("error read: filename: {} err: {}", filename_.c_str(),
+                    strerror(errno));
       return State::IoError();
     }
     // Close the temporary file descriptor opened earlier.
@@ -130,7 +131,6 @@ public:
   ~PosixEnv() {
     static char msg[] = "PosixEnv destroyed!\n";
     std::fwrite(msg, 1, sizeof(msg), stderr);
-    std::abort();
   }
   State NewReadFile(const std::string &filename,
                     std::unique_ptr<ReadFile> &result);

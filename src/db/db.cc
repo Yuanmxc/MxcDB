@@ -25,16 +25,6 @@ class Version;
 class VersionSet;
 
 namespace mxcdb {
-void static initlogfile() {
-  try {
-    log = spdlog::basic_logger_mt("basic_logger", "logs/basic.log");
-    log->set_level(spdlog::level::debug);
-    log->set_pattern("[%Y-%m-%d %H:%M:%S.%e][thread %t][%@,%!][%l] : %v");
-    log->flush_on(spdlog::level::info);
-  } catch (const spdlog::spdlog_ex &ex) {
-    std::cout << "Log init failed: " << ex.what() << std::endl;
-  }
-}
 State DBImpl::NewDB() {
   VersionEdit new_db;
   new_db.SetLogNumber(0);
@@ -51,7 +41,7 @@ State DBImpl::NewDB() {
     walWriter loger(file);
     std::string record;
     new_db.EncodeTo(&record);
-    log->info("wal write record {}", record);
+    mlog->info("wal write record {}", record);
     s = loger.Appendrecord(record);
     if (s.ok()) {
       s = file->Close();
@@ -75,7 +65,7 @@ DBImpl::DBImpl(const Options *opt, const std::string &dbname)
   if (!bloomfit) {
     bloomfit = std::make_unique<BloomFilter>(10);
   }
-  log->info("test1");
+  mlogger.Setlog(dbname);
 }
 DBImpl::~DBImpl() {
   std::unique_lock<std::mutex> lk(mutex);
@@ -92,11 +82,12 @@ DBImpl::~DBImpl() {
 // 目录是否存在、Current文件是否存在等。然后主要通过VersionSet::Recover与DBImpl::RecoverLogFile
 // 两个方法，分别恢复其VersionSet的状态与MemTable的状态。
 State DBImpl::Recover(VersionEdit *edit, bool *save_manifest) {
-  env->CreatpeDir(dbname);
-  State s = env->LockFile(LockFileName(dbname), db_lock);
-  if (!s.ok()) {
-    return s;
-  }
+  env->CreateDir(dbname);
+  // State s = env->LockFile(LockFileName(dbname), db_lock);
+  // if (!s.ok()) {
+  //   return s;
+  // }
+  State s;
   if (!env->FileExists(CurrentFileName(dbname))) {
     s = NewDB();
     if (!s.ok()) {
@@ -113,10 +104,6 @@ State DBImpl::Recover(VersionEdit *edit, bool *save_manifest) {
 }
 State DBImpl::Open(const Options &options, std::string name, DB **dbptr) {
   *dbptr = nullptr;
-  initlogfile();
-  if (log) {
-    log->info("test");
-  }
   DBImpl *impl = new DBImpl(&options, name);
   impl->mutex.lock();
   VersionEdit edit;
@@ -202,7 +189,7 @@ State DBImpl::Write(const WriteOptions &opt, WriteBatch *updates) {
     }
     mutex.lock();
     if (sync_error) {
-      log->error("logfile sync error int {}", logfile->Name());
+      mlog->error("logfile sync error int {}", logfile->Name());
     }
   }
   versions_->SetLastSequence(last_sequence);
@@ -274,7 +261,7 @@ WriteBatch *DBImpl::BuildBatchGroup(DBImpl::Writer **last_writer) {
 State DBImpl::MakeRoomForwrite(bool force) {
   bool allow_delay = !force;
   State s;
-  std::unique_lock<std::mutex> lks(mutex);
+  std::unique_lock<std::mutex> lks(mutex, std::adopt_lock);
   while (true) {
     if (!bg_error.ok()) {
       s = bg_error;
@@ -282,7 +269,7 @@ State DBImpl::MakeRoomForwrite(bool force) {
     } else if (allow_delay &&
                versions_->NumLevelFiles(0) >= config::kL0_SlowdownWrites) {
       // level0的文件数限制超过8,睡眠1ms,等待后台任务执行。写入writer线程向压缩线程转让cpu
-      mutex.unlock();
+      lks.unlock();
       ::sleep(1000);
       allow_delay = false; // sleep too large
       lks.unlock();
@@ -290,10 +277,10 @@ State DBImpl::MakeRoomForwrite(bool force) {
                (mem_->ApproximateMemoryUsage() <= opts->write_buffer_size)) {
       break;
     } else if (versions_->NumLevelFiles(0) >= config::kL0_StopWrites) {
-      log->warn("Too many L0 files; waiting...");
+      mlog->warn("Too many L0 files; waiting...");
       background_work_finished_signal.wait(lks);
     } else if (imm_ != nullptr) {
-      log->info("Current memtable full; waiting...");
+      mlog->info("Current memtable full; waiting...");
       background_work_finished_signal.wait(lks);
     } else {
       // 到新的memtable并触发旧的进行compaction
@@ -321,7 +308,7 @@ State DBImpl::MakeRoomForwrite(bool force) {
 void DBImpl::MaybeCompaction() {
   if (background_compaction_) {
     // Already scheduled
-    log->debug("background is work");
+    mlog->debug("background is work");
   } else if (shutting_down_.load(std::memory_order_acquire)) {
   } else if (!bg_error.ok()) {
   } else if (imm_ == nullptr && !versions_->NeedsCompaction()) {
@@ -329,7 +316,7 @@ void DBImpl::MaybeCompaction() {
   } else {
     background_compaction_ = true;
     env->Schedule(std::bind(&DBImpl::BackgroundCall, this));
-    log->info("dbimpl start schedule backgroundCall");
+    mlog->info("dbimpl start schedule backgroundCall");
   }
 }
 void DBImpl::DeleteObsoleteFiles() { // delete outtime file
@@ -371,7 +358,7 @@ void DBImpl::DeleteObsoleteFiles() { // delete outtime file
         if (type == kTableFile) {
           table_cache->Evict(num); // clear deletedfile chache
         }
-        log->info("Delete type={} #{}", type, num);
+        mlog->info("Delete type={} #{}", type, num);
         env->DeleteFile(dbname + "/" + filenames[i]);
       }
     }
@@ -419,7 +406,8 @@ void DBImpl::BackgroundCompaction() { // doing compaction
     c->Edit()->AddFile(c->Level(), cf->num, cf->file_size, cf->smallest,
                        cf->largest);
     s = versions_->LogAndApply(c->Edit(), &mutex);
-    log->info("Moved {} to level-{} bytes", cf->num, c->Level(), cf->file_size);
+    mlog->info("Moved {} to level-{} bytes", cf->num, c->Level(),
+               cf->file_size);
   } else {
     std::unique_ptr<CompactionState> cpst =
         std::make_unique<CompactionState>(c.get());
@@ -432,7 +420,7 @@ void DBImpl::CompactMemTable() {
   State s = WriteLevel0Table(imm_, edit, base);
 
   if (s.ok() && shutting_down_.load(std::memory_order_acquire)) {
-    log->info("Deleting DB during memtable compaction");
+    mlog->info("Deleting DB during memtable compaction");
     s = State::IoError();
   }
   if (s.ok()) {
@@ -445,7 +433,7 @@ void DBImpl::CompactMemTable() {
     has_imm_.store(false, std::memory_order_release);
     DeleteObsoleteFiles();
   } else {
-    log->error("CompactMemTable is error in {}", logfilenum);
+    mlog->error("CompactMemTable is error in {}", logfilenum);
   }
 }
 State DBImpl::WriteLevel0Table(std::shared_ptr<Memtable> &mem,
@@ -454,14 +442,14 @@ State DBImpl::WriteLevel0Table(std::shared_ptr<Memtable> &mem,
   FileMate meta;
   meta.num = versions_->NewFileNumber();
   pending_outputs_.insert(meta.num);
-  log->info("Level-0 table filenumber{}: started", meta.num);
+  mlog->info("Level-0 table filenumber{}: started", meta.num);
   State s;
   {
     mutex.unlock();
     s = BuildTable(mem, meta);
     mutex.lock();
   }
-  log->info("Level 0 table {} byytes {}", meta.num, meta.file_size);
+  mlog->info("Level 0 table {} byytes {}", meta.num, meta.file_size);
   pending_outputs_.erase(meta.num);
   int level = 0;
   if (s.ok() && meta.file_size > 0) {
@@ -497,9 +485,9 @@ State DBImpl::BuildTable(std::shared_ptr<Memtable> &mem, FileMate &meta) {
   return s;
 }
 State DBImpl::DoCompactionWork(std::unique_ptr<CompactionState> &compact) {
-  log->info("start Compacion form Level {} {} to  Level {} to {}",
-            compact->comp->Level(), compact->comp->Inputsize(0),
-            compact->comp->Level() + 1, compact->comp->Inputsize(1));
+  mlog->info("start Compacion form Level {} {} to  Level {} to {}",
+             compact->comp->Level(), compact->comp->Inputsize(0),
+             compact->comp->Level() + 1, compact->comp->Inputsize(1));
   if (snapshots.empty()) {
     compact->small_snap = versions_->LastSequence(); // 当前seq
   } else {
@@ -573,7 +561,7 @@ State DBImpl::DoCompactionWork(std::unique_ptr<CompactionState> &compact) {
     iter->Next();
   }
   if (s.ok() && shutting_down_.load(std::memory_order_acquire)) {
-    log->error("Deleting DB during compaction");
+    mlog->error("Deleting DB during compaction");
     s = State::IoError();
   }
   if (s.ok() && compact->builder != nullptr) {
@@ -594,7 +582,7 @@ State DBImpl::FinishCompactionOutputFile(CompactionState *compact,
   if (s.ok()) {
     s = compact->builder->Finish();
   } else {
-    log->error("iterator error");
+    mlog->error("iterator error");
   }
   const uint64_t current_bytes = compact->builder->Size();
   compact->current_output()->file_size = current_bytes;

@@ -119,7 +119,7 @@ State Version::Get(const ReadOptions &op, const Lookey &key, std::string *val,
           return s;
         case kCorrupt:
           s = State::Corruption();
-          log->error("corrupted key for ", user_key);
+          mlog->error("corrupted key for ", user_key);
           return s;
         }
       }
@@ -164,7 +164,10 @@ VersionSet::VersionSet(const std::string &dbname_, const Options *options,
     : dbname(dbname_), ops(options), table_cache(table_cache_), env_(env),
       next_file_number(2), manifest_file_number(0), last_sequence(0),
       log_number(0), descriptor_file(nullptr), descriptor_log(nullptr),
-      nowversion(nullptr) {}
+      nowversion(nullptr) {
+  nowversion = std::make_shared<Version>(this);
+  versionlist.emplace_front(nowversion);
+}
 class VersionSet::Builder { // helper form edit+version=next version
 private:
   struct BySmallestKey { // sort small of class
@@ -497,7 +500,7 @@ void VersionSet::SetupOtherInputs(
       nowversion->GetOverlappFiles(cop->level_ + 1, &new_start, &new_limit,
                                    &expanded1);
       if (expanded1.size() == cop->inputs_[1].size()) {
-        log->info(
+        mlog->info(
             "Expanding@LEVEL{} FileNum: {} + {} ({} + {} bytes) to Expend "
             "FileNum {} + {} ({} + {} bytes)",
             cop->level_, int(cop->inputs_[0].size()),

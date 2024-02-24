@@ -13,7 +13,7 @@ State Table::Open(const Options &options_,
                   std::shared_ptr<Table> &table) {
   table = nullptr;
   if (file_size < Footer::kEncodedLength) {
-    log->error("file is too smart an sstable");
+    mlog->error("file is too smart an sstable");
     return State::Corruption();
   }
   // char foot_buf[Footer::kEncodedLength];
@@ -102,7 +102,7 @@ std::shared_ptr<Iterator> Table::BlockReader(void *args, const ReadOptions &opt,
   if (block != nullptr) {
     iter = block->NewIterator();
   } else {
-    log->error("new iterator blockreader error");
+    mlog->error("new iterator blockreader error");
   }
   return iter;
 }
