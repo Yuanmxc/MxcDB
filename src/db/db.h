@@ -78,6 +78,7 @@ private:
     explicit CompactionState(Compaction *c)
         : comp(c), small_snap(0), outfile(nullptr), builder(nullptr),
           total_bytes(0) {}
+    ~CompactionState() { delete builder; }
     struct Output {
       uint64_t number;
       uint64_t file_size;
@@ -111,7 +112,7 @@ private:
   State FinishCompactionOutputFile(CompactionState *compact,
                                    std::shared_ptr<Iterator> &input);
   State OpenCompactionOutputFile(CompactionState *compact);
-  State InstallCompactionResults(CompactionState *compact);
+  State InstallCompactionResults(std::unique_ptr<CompactionState> &compact);
   const std::string dbname;
   const Options *opts;
   std::unique_ptr<FileLock> db_lock;

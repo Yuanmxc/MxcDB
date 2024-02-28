@@ -1,11 +1,12 @@
 #include "memtable.h"
 
-#include <cassert>
 #include <crc32c/crc32c.h>
+#include <snappy.h>
+
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <snappy.h>
 #include <string_view>
 
 #include "src/db/block.h"
@@ -75,10 +76,12 @@ bool Memtable::Get(const Lookey &key, std::string *value, State *s) {
       value->resize(val_size);
       memcpy(value->data(), found->val.c_str() + VarintLength(val_size),
              val_size);
-      return true;
     } else if ((found->key.Getag() & 0xf) == kTypeDeletion) {
-      return false;
+      *s = State::Notfound();
     }
+    mlog->debug("Get Key {} Value {} Seq {} Type {}", keys.getusrkeyview(),
+                *value, found->key.Getag() >> 8, found->key.Getag() & 0xf);
+    return true;
   } else {
     return false;
   }

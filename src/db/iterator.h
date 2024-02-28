@@ -149,9 +149,8 @@ private:
   IteratorWrapper data_iter;
   std::string data_block_handle;
 };
-static std::shared_ptr<Iterator> GetFileIterator(void *arg,
-                                                 const ReadOptions &options,
-                                                 std::string_view file_value);
+std::shared_ptr<Iterator> GetFileIterator(void *arg, const ReadOptions &options,
+                                          std::string_view file_value);
 std::shared_ptr<Iterator> NewTwoLevelIterator(
     std::shared_ptr<Iterator> index_iter,
     std::shared_ptr<Iterator> (*block_function)(void *arg,

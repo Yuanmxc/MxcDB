@@ -5,8 +5,9 @@
 
 #include "cache.h"
 namespace mxcdb {
-std::shared_ptr<Iterator> GetFileIterator(void *arg, const ReadOptions &options,
-                                          std::string_view file_value) {
+std::shared_ptr<Iterator>
+GetFileIterator(void *arg, const ReadOptions &options,
+                std::string_view file_value) { // TODO should fix ?
   TableCache *cache = reinterpret_cast<TableCache *>(arg);
   if (file_value.size() != 16) {
     mlog->error("FileReader invoked with unexpected value");

@@ -1,4 +1,5 @@
 #include "src/util/bloom.h"
+#include "src/util/loger.h"
 #include "gtest/gtest.h"
 #include <string>
 #include <string_view>
@@ -8,6 +9,7 @@ TEST(testbloom, test0) {
   std::vector<int> start_{0, 1, 3, 7, 9, 10};
   std::string k{"asdfghjklzggt"};
   std::string kk{"fresgrtesgvsdv"};
+  mxcdb::mlogger.Setlog("/tmp/testdb");
   start_.emplace_back(k.size());
   std::vector<std::string_view> pp;
   mxcdb::BloomFilter sp(10);

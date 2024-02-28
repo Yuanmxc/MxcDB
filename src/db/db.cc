@@ -570,6 +570,9 @@ State DBImpl::DoCompactionWork(std::unique_ptr<CompactionState> &compact) {
   if (s.ok()) {
     s = iter->state();
   }
+  if (s.ok()) {
+    s = InstallCompactionResults(compact); // 将新生成的sst 加入到Version中
+  }
 }
 State DBImpl::FinishCompactionOutputFile(CompactionState *compact,
                                          std::shared_ptr<Iterator> &input) {
@@ -601,5 +604,38 @@ State DBImpl::FinishCompactionOutputFile(CompactionState *compact,
     s = iter->state();
   }
   return s;
+}
+State DBImpl::OpenCompactionOutputFile(CompactionState *compact) {
+  assert(compact != nullptr);
+  assert(compact->builder == nullptr);
+  uint64_t file_number;
+  {
+    mutex.lock();
+    file_number = versions_->NewFileNumber();
+    pending_outputs_.insert(file_number);
+    CompactionState::Output out;
+    out.number = file_number;
+    out.smallest.clear();
+    out.largest.clear();
+    compact->oupts.push_back(out);
+    mutex.unlock();
+  }
+  std::string fname = TableFileName(dbname, file_number);
+  State s = env->NewWritableFile(fname, compact->outfile);
+  if (s.ok()) {
+    compact->builder = new Tablebuilder(*opts, compact->outfile);
+  }
+  return s;
+}
+State DBImpl::InstallCompactionResults(
+    std::unique_ptr<CompactionState> &compact) { // 新生成的sst 加入到Version中
+  compact->comp->AddInputDeletions(compact->comp->Edit());
+  int level = compact->comp->Level();
+  for (int i = 0; i < level; i++) {
+    const CompactionState::Output &outs = compact->oupts[i];
+    compact->comp->Edit()->AddFile(level + 1, outs.number, outs.file_size,
+                                   outs.smallest, outs.largest);
+  }
+  return versions_->LogAndApply(compact->comp->Edit(), &mutex);
 }
 } // namespace mxcdb

@@ -16,7 +16,11 @@ void WriteBatch::Put(std::string_view key, std::string_view value) {
   PutLengthPrefixedview(&mate, value);
 }
 
-void WriteBatch::Delete(std::string_view key) {}
+void WriteBatch::Delete(std::string_view key) {
+  SetCount(Count() + 1);
+  mate.push_back(static_cast<char>(kTypeDeletion));
+  PutLengthPrefixedview(&mate, key);
+}
 
 void WriteBatch::Append(WriteBatch *source) {
   SetCount(source->Count() + Count());
@@ -58,7 +62,7 @@ State WriteBatch::InsertInto(std::shared_ptr<Memtable> memtable) {
       break;
     case kTypeDeletion:
       if (GetLengthPrefixedview(&ptr, &key)) {
-        memtable->Add(now_seq, kTypeValue, key, std::string_view());
+        memtable->Add(now_seq, kTypeDeletion, key, std::string_view());
         mlog->debug("memtable add Seq:{} Type:{} Key:{} Value:{}", now_seq,
                     kTypeDeletion, key, value);
       } else {
