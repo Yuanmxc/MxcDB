@@ -44,7 +44,19 @@ public:
   explicit Skiplist(std::shared_ptr<Arena> &arena_) : arena(arena_) {
     skiplist_init(&table, my_cmp);
   }
-
+  ~Skiplist() {
+    skiplist_node *cursor = skiplist_begin(&table);
+    while (cursor) {
+      node *entry = _get_entry(cursor, node, snode);
+      cursor = skiplist_next(&table, cursor);
+      skiplist_erase_node(&table, &entry->snode);
+      skiplist_release_node(&entry->snode);
+      skiplist_wait_for_free(&entry->snode);
+      skiplist_free_node(&entry->snode);
+      free(entry);
+    }
+    skiplist_free(&table);
+  }
   Skiplist(const Skiplist &) = delete;
   Skiplist &operator=(const Skiplist &) = delete;
   void Insert(SkiplistKey skiplistkv);
@@ -70,18 +82,21 @@ public:
     skiplist_node *t = skiplist_prev(&table, &ptr->snode);
     return _get_entry(t, node, snode);
   }
-  bool Valid(node *ptr) { return skiplist_is_valid_node(&ptr->snode); }
+  bool Valid(node *ptr) {
+    if (!ptr)
+      return false;
+    return skiplist_is_valid_node(&ptr->snode);
+  }
   skiplist_node *Seek(const InternalKey &key);
   State Flushlevel0(FileMate &meta);
   bool GreaterEqual(SkiplistKey &a, SkiplistKey &b);
   bool KeyIsAfterNode(SkiplistKey &key, node *n) const;
-  size_t Getsize() { return arena->MemoryUsage() + size; }
+  size_t Getsize() { return arena->MemoryUsage(); }
 
 private:
   skiplist_raw table;
   std::shared_ptr<Arena> arena; // for new and delete
   std::vector<std::unique_ptr<node>> nodes;
-  std::atomic<size_t> size;
 };
 } // namespace mxcdb
 #endif

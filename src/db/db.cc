@@ -25,6 +25,7 @@ class Version;
 class VersionSet;
 
 namespace mxcdb {
+extern std::unique_ptr<BloomFilter> bloomfit;
 State DBImpl::NewDB() {
   VersionEdit new_db;
   new_db.SetLogNumber(0);
@@ -62,9 +63,6 @@ DBImpl::DBImpl(const Options *opt, const std::string &dbname)
       table_cache(new TableCache(dbname, opt)), shutting_down_(false),
       background_compaction_(false), env(std::make_shared<PosixEnv>()),
       versions_(std::make_unique<VersionSet>(dbname, opt, table_cache, env)) {
-  if (!bloomfit) {
-    bloomfit = std::make_unique<BloomFilter>(10);
-  }
   mlogger.Setlog(dbname);
 }
 DBImpl::~DBImpl() {
@@ -105,6 +103,8 @@ State DBImpl::Recover(VersionEdit *edit, bool *save_manifest) {
 State DBImpl::Open(const Options &options, std::string name, DB **dbptr) {
   *dbptr = nullptr;
   DBImpl *impl = new DBImpl(&options, name);
+  if (!bloomfit)
+    bloomfit = std::make_unique<BloomFilter>(10);
   impl->mutex.lock();
   VersionEdit edit;
   // Recover handles create_if_missing, error_if_exists
@@ -289,8 +289,6 @@ State DBImpl::MakeRoomForwrite(bool force) {
       s = env->NewWritableFile(LogFileName(dbname, new_log_number),
                                lfile); // 生成新的log文件
       if (!s.ok()) {
-        // Avoid chewing through file number space in a tight loop.
-        // versions_->ReuseFileNumber(new_log_number); TODO
         break;
       }
       logfile.reset(lfile.release());
@@ -442,7 +440,7 @@ State DBImpl::WriteLevel0Table(std::shared_ptr<Memtable> &mem,
   FileMate meta;
   meta.num = versions_->NewFileNumber();
   pending_outputs_.insert(meta.num);
-  mlog->info("Level-0 table filenumber{}: started", meta.num);
+  mlog->info("Level-0 table filenumber:{} started", meta.num);
   State s;
   {
     mutex.unlock();

@@ -11,7 +11,6 @@ namespace mxcdb {
 static const size_t kFilterBaseLg = 11;
 static const size_t kFilterBase = 1 << kFilterBaseLg;
 
-static std::unique_ptr<BloomFilter> bloomfit = nullptr;
 class FilterBlockbuilder {
 public:
   FilterBlockbuilder() = default;

@@ -5,6 +5,7 @@
 
 #include "src/util/common.h"
 namespace mxcdb {
+extern std::unique_ptr<BloomFilter> bloomfit;
 void FilterBlockbuilder::StartBlock(uint64_t block_offset) {
   uint64_t filter_index = (block_offset / kFilterBase);
   while (filter_index > filter_offsets_.size()) { // new filter
@@ -22,13 +23,13 @@ void FilterBlockbuilder::CreateNewfilter() {
     return;
   }
   start_.emplace_back(keys_.size());
+  char *p = keys_.data();
   for (int i = 0; i < start_.size() - 1; i++) {
-    const char *p = keys_.data() + start_[i];
-    size_t length = start_[i + 1] - start_[i];
-    tmp_keys_.emplace_back(std::string_view(p, length));
+    tmp_keys_.emplace_back(std::string_view(p, start_[i]));
+    p += start_[i];
   }
   filter_offsets_.emplace_back(result_.size());
-  bloomfit->CreateFiler(&tmp_keys_[0], start_.size(), &result_);
+  bloomfit->CreateFiler(tmp_keys_.data(), start_.size(), &result_);
   tmp_keys_.clear();
   keys_.clear();
   start_.clear();
@@ -43,7 +44,7 @@ std::string_view FilterBlockbuilder::Finish() {
   }
   PutFixed32(&result_, bengoffset);
   result_.push_back(kFilterBaseLg);
-  return std::string_view(result_);
+  return result_;
 }
 FilterBlockReader::FilterBlockReader(const std::string_view &contents)
     : data(nullptr), offset(nullptr), num(0), base_lg(0) {

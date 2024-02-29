@@ -15,7 +15,7 @@ class BlockHandle {
 public:
   enum { kMaxEncodedLength = 10 + 10 };
 
-  BlockHandle() = default;
+  BlockHandle() : offset_(0), size_(0) {}
   uint64_t offset() const { return offset_; }
   void set_offset(uint64_t offset) { offset_ = offset; }
   uint64_t size() const { return size_; }
