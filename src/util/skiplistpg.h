@@ -22,9 +22,7 @@ public:
   ~node() = default;
   friend class Skiplist;
   friend int my_cmp(skiplist_node *a, skiplist_node *b, void *aux);
-  // Metadata for skiplist node.
   skiplist_node snode;
-  // My data here: {int, int} pair.
 
   InternalKey key;
   std::string val; // value size (varint32) + value std::string
@@ -53,7 +51,6 @@ public:
       skiplist_release_node(&entry->snode);
       skiplist_wait_for_free(&entry->snode);
       skiplist_free_node(&entry->snode);
-      free(entry);
     }
     skiplist_free(&table);
   }
