@@ -72,7 +72,7 @@ size_t ShareCache::Getsize() {
   return all;
 }
 TableCache::TableCache(std::string_view dbname, const Options *opt)
-    : env(new PosixEnv), dbname(dbname), opt(opt),
+    : env(new PosixEnv), dbname(dbname.data(), dbname.size()), opt(opt),
       cache(std::make_unique<ShareCache>(opt->max_open_files -
                                          kNumNonTableCacheFiles)) {}
 State TableCache::Get(const ReadOptions &readopt, uint64_t file_num,
@@ -104,14 +104,13 @@ State TableCache::FindTable(
   EncodeFixed64(buf, file_num);
   std::string_view key(buf, sizeof(buf));
   *handle = cache->Lookup(key);
-  std::string dbname_(dbname);
   if (*handle == nullptr) {
-    std::string fname = TableFileName(dbname_, file_num);
+    std::string fname = TableFileName(dbname, file_num);
     std::shared_ptr<RandomAccessFile> file = nullptr;
     std::shared_ptr<Table> table = nullptr;
     s = env->NewRandomAccessFile(fname, file);
     if (!s.ok()) {
-      std::string old_fname = SSTTableFileName(dbname_, file_num);
+      std::string old_fname = SSTTableFileName(dbname, file_num);
       if (env->NewRandomAccessFile(old_fname, file).ok()) {
         s = State::Ok();
       }
