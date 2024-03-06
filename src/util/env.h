@@ -74,7 +74,7 @@ public:
   ReadFile &operator=(const ReadFile &) = delete;
   ~ReadFile() = default;
   std::string_view Name() { return std::string_view(str); }
-  State Read(uint32_t n, std::string *result);
+  State Read(uint32_t n, std::string *result, size_t *readsize);
   State Skip(uint64_t n);
 
 private:

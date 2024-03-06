@@ -10,12 +10,12 @@
 
 #include "../util/bloom.h"
 #include "../util/filename.h"
-#include "../util/filenm"
 #include "iterator.h"
 #include "snapshot.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "src/db/filterblock.h"
 #include "src/db/memtable.h"
+#include "src/db/reader.h"
 #include "src/db/version_set.h"
 #include "src/util/common.h"
 #include "src/util/env.h"
@@ -76,17 +76,17 @@ DBImpl::~DBImpl() {
   if (db_lock != nullptr) {
     env->UnlockFile(db_lock);
   }
+  mlog->info("close db {}", dbname);
 }
 // 该方法会检查Lock文件是否被占用（LevelDB通过名为LOCK的文件避免多个LevelDB进程同时访问一个数据库）、
 // 目录是否存在、Current文件是否存在等。然后主要通过VersionSet::Recover与DBImpl::RecoverLogFile
 // 两个方法，分别恢复其VersionSet的状态与MemTable的状态。
 State DBImpl::Recover(VersionEdit *edit, bool *save_manifest) {
   env->CreateDir(dbname);
-  // State s = env->LockFile(LockFileName(dbname), db_lock);
-  // if (!s.ok()) {
-  //   return s;
-  // }
-  State s;
+  State s = env->LockFile(LockFileName(dbname), db_lock);
+  if (!s.ok()) {
+    return s;
+  }
   if (!env->FileExists(CurrentFileName(dbname))) {
     s = NewDB();
     if (!s.ok()) {
@@ -121,9 +121,69 @@ State DBImpl::Recover(VersionEdit *edit, bool *save_manifest) {
                 TableFileName(dbname, *(expected.begin())));
     return State::Corruption();
   }
-  // TODO recover memtable
+  // Recover by lognumber sort
+  std::sort(logs.begin(), logs.end());
+  for (size_t i = 0; i < logs.size(); i++) {
+    s = RecoverLogFile(logs[i], (i == logs.size() - 1), save_manifest, edit,
+                       &max_sequence);
+    if (!s.ok()) {
+      return s;
+    }
+  }
 
   return State::Ok();
+}
+State DBImpl::RecoverLogFile(uint32_t log_num, bool last_log,
+                             bool *save_manifest, VersionEdit *edit,
+                             SequenceNum *max_sequence) {
+  std::string fname = LogFileName(dbname, log_num);
+  std::shared_ptr<ReadFile> file;
+  State s = env->NewReadFile(fname, file);
+  if (!s.ok()) {
+    return s;
+  }
+  Reader readers(file, true, 0);
+  mlog->debug("Recovering log #{}", log_num);
+  std::string record;
+  WriteBatch batch;
+  int compactions = 0;
+  std::shared_ptr<Memtable> mem = nullptr;
+  std::shared_ptr<Version> base = nullptr;
+  while (readers.ReadRecord(&record)) {
+    if (record.size() < 12) {
+      mlog->error("log {} record too small {}", log_num, record.size());
+      continue;
+    }
+    batch.SetContents(record);
+    if (mem == nullptr) {
+      mem = std::make_shared<Memtable>();
+    }
+    s = batch.InsertInto(mem);
+    if (!s.ok()) {
+      break;
+    }
+    const SequenceNum last_seq = batch.Sequence() + batch.Count() - 1;
+    if (last_seq > *max_sequence) {
+      *max_sequence = last_seq;
+    }
+    if (mem->ApproximateMemoryUsage() > opts->write_buffer_size) {
+      compactions++;
+      *save_manifest = true;
+      s = WriteLevel0Table(mem, *edit, base);
+      mem = nullptr;
+      if (!s.ok()) {
+        break;
+      }
+    }
+  }
+  if (mem != nullptr) {
+    // mem did not get reused; compact it.
+    if (s.ok()) {
+      *save_manifest = true;
+      s = WriteLevel0Table(mem, *edit, base);
+    }
+  }
+  return s;
 }
 State DBImpl::Open(const Options &options, std::string name, DB **dbptr) {
   *dbptr = nullptr;
