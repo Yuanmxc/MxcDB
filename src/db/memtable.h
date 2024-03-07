@@ -31,6 +31,7 @@ public:
 
 private:
   friend class Tablebuilder;
+  friend class DBImpl;
   std::string tmp;
   std::shared_ptr<Arena> arena;
   std::unique_ptr<Skiplist> table;

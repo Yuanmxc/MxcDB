@@ -89,6 +89,7 @@ public:
   bool GreaterEqual(SkiplistKey &a, SkiplistKey &b);
   bool KeyIsAfterNode(SkiplistKey &key, node *n) const;
   size_t Getsize() { return arena->MemoryUsage(); }
+  State findall();
 
 private:
   skiplist_raw table;
