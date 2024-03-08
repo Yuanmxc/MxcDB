@@ -11,9 +11,9 @@
 
 #include "common.h"
 #include "skiplist.h"
-namespace mxcdb {
+namespace mxcdb
 
-typedef uint64_t SequenceNum;
+    typedef uint64_t SequenceNum;
 enum Valuetype {
   kTypeDeletion = 0X0,
   kTypeValue = 0x1,
