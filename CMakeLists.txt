@@ -1,20 +1,32 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 project(MxcDB)
 
-set(CMAKE_CXX_STANDARD 14)
-link_libraries(-pthread)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-SET(CMAKE_C_FLAGS ${CMAKE_CXX_FLAGS} -g -fno-strict-aliasing -O2 -Wall -Wextra -pipe
--D_GNU_SOURCE -D_REENTRANT -fPIC -Wno-deprecated -m64 -Wnonnull -Wstringop-overflow -Wuninitialized -Wunused)
+# 添加src目录下的文件到变量SRC_FILES
+file(GLOB_RECURSE SRC_FILES "${PROJECT_SOURCE_DIR}/src/*.cc")
 
-aux_source_directory(src/db MXCDB_DB)
-aux_source_directory(src/util MXCDB_UTIL)
-aux_source_directory(test MXCDB_TEST)
-#搜索目录下所有的cpp文件
+# 指定头文件目录
+include_directories(${PROJECT_SOURCE_DIR}/src)
 
-add_executable(MxcDB
-        a.cc
-        ${MXCDB_DB}
-        ${MXCDB_UTIL}
+find_package(Snappy REQUIRED)
+find_package(spdlog REQUIRED)
+find_package(GTest REQUIRED)
+find_package(benchmark REQUIRED)
 
+# 添加可执行文件
+add_executable(${PROJECT_NAME} ${SRC_FILES})
+
+# 链接外部库
+target_link_libraries(${PROJECT_NAME} 
+    Snappy::snappy
+    spdlog::spdlog
+    GTest::GTest 
+    benchmark::benchmark
 )
+
+include_directories(/usr/local/include)
+link_directories(/usr/local/lib)
+
+target_link_libraries(${PROJECT_NAME} crc32 skiplist)

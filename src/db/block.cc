@@ -7,9 +7,9 @@
 #include <memory>
 #include <string_view>
 
-#include "src/db/version_set.h"
-#include "src/util/common.h"
-#include "src/util/options.h"
+#include "../db/version_set.h"
+#include "../util/common.h"
+#include "../util/options.h"
 namespace mxcdb {
 State ReadBlock(RandomAccessFile *file, const ReadOptions &options,
                 const BlockHandle &handle, std::string_view *result) {

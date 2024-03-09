@@ -8,7 +8,7 @@
 #include "block.h"
 #include "filterblock.h"
 #include "iterator.h"
-#include "src/db/memtable.h"
+#include "../db/memtable.h"
 namespace mxcdb {
 struct Tablestpl {
   Options options;

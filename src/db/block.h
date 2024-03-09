@@ -5,8 +5,8 @@
 
 #include "../util/options.h"
 #include "iterator.h"
-#include "src/util/common.h"
-#include "src/util/key.h"
+#include "../util/common.h"
+#include "../util/key.h"
 namespace mxcdb {
 static const uint64_t kTableMagicNumber = 0xdb4775248b80fb57ull;
 // 1-byte type + 32-bit crc

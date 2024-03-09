@@ -6,7 +6,7 @@
 #include <string>
 #include <string_view>
 
-#include "src/db/walog.h"
+#include "../db/walog.h"
 namespace mxcdb {
 Reader::Reader(std::shared_ptr<ReadFile> file_, bool checksum,
                uint64_t initial_offset)

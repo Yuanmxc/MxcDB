@@ -13,7 +13,7 @@
 #include "../util/options.h"
 #include "cache.h"
 #include "iterator.h"
-#include "src/util/common.h"
+#include "../util/common.h"
 #include "version_edit.h"
 #include "walog.h"
 namespace mxcdb {

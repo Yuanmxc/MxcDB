@@ -3,8 +3,8 @@
 #include <iostream>
 #include <string>
 
-#include "src/db/db.h"
-#include "src/util/common.h"
+#include "../db/db.h"
+#include "../util/common.h"
 #include "gtest/gtest.h"
 
 TEST(testmemtable, test0) {

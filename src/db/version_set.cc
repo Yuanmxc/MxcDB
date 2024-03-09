@@ -4,12 +4,12 @@
 #include <memory>
 #include <string_view>
 
-#include "src/db/reader.h"
-#include "src/db/version_edit.h"
-#include "src/util/env.h"
-#include "src/util/filename.h"
-#include "src/util/key.h"
-#include "src/util/options.h"
+#include "../db/reader.h"
+#include "../db/version_edit.h"
+#include "../util/env.h"
+#include "../util/filename.h"
+#include "../util/key.h"
+#include "../util/options.h"
 namespace mxcdb {
 static int64_t
 TotalFileSize(const std::vector<std::shared_ptr<FileMate>> &files) {

@@ -10,10 +10,10 @@
 #include <string>
 #include <string_view>
 
-#include "src/db/block.h"
-#include "src/util/common.h"
-#include "src/util/options.h"
-#include "src/util/skiplistpg.h"
+#include "../db/block.h"
+#include "../util/common.h"
+#include "../util/options.h"
+#include "../util/skiplistpg.h"
 namespace mxcdb {
 void Footer::EncodeTo(std::string *dst) const {
   metaindex_handle_.EncodeTo(dst);

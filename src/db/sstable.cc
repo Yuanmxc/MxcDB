@@ -4,9 +4,9 @@
 #include <string_view>
 
 #include "cache.h"
-#include "src/db/block.h"
-#include "src/db/memtable.h"
-#include "src/util/options.h"
+#include "../db/block.h"
+#include "../db/memtable.h"
+#include "../util/options.h"
 namespace mxcdb {
 State Table::Open(const Options &options_,
                   std::shared_ptr<RandomAccessFile> file, uint64_t file_size,

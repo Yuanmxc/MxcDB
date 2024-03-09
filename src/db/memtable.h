@@ -10,7 +10,7 @@
 #include "../util/skiplistpg.h"
 #include "block.h"
 #include "filterblock.h"
-#include "src/util/common.h"
+#include "../util/common.h"
 namespace mxcdb {
 class Tablebuilder;
 class Memtable {

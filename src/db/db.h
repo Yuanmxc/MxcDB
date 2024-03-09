@@ -14,9 +14,9 @@
 
 #include "cache.h"
 #include "memtable.h"
-#include "src/util/common.h"
-#include "src/util/env.h"
-#include "src/util/options.h"
+#include "../util/common.h"
+#include "../util/env.h"
+#include "../util/options.h"
 #include "version_set.h"
 #include "walog.h"
 #include "writebatch.h"
