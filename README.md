@@ -18,16 +18,13 @@ MxcDB 是一个基于 Level 策略 Lsm-Tree 实现的单机 Key-Value 数据库�
 软件安装命令以**Arch Linux**为例。
 
 1. 安装第三方依赖：
-
-    ```bash
-    sudo pacman -S snappy    # 压缩算法
-    sudo pacman -S spdlog    # 高效日志库
-    sudo pacman -S gtest3    # 单元测试框架
-    sudo pacman -S benchmark # 基准性能测试
-    sudo p -S python-crc32c  # 校验和
-    ```
+ 
++ snappy    压缩算法
++ spdlog    高效日志库
++ gtest3    单元测试框架
++ google-benchmark 基准性能测试
++ crc32c  校验和
     
-
 2. 编译运行：
 
     ```bash
